@@ -19,7 +19,7 @@ public class Member extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    @Column(name = "member_id", unique = true, nullable = false)
+    @Column(unique = true, nullable = false)
     @JdbcTypeCode(SqlTypes.VARCHAR)
     private UUID id;
 
