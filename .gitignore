@@ -48,3 +48,11 @@ jacoco.exec
 # Packaged files
 *.jar
 *.war
+
+# Ignore specific files and directories
+.gitattributes
+gradle/
+gradlew
+gradlew.bat
+build.gradle
+settings.gradle
