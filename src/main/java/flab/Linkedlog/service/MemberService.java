@@ -62,7 +62,7 @@ public class MemberService {
             throw new RuntimeException("Invalid credentials");
         }
 
-        return jwtUtil.generateToken(member.getUserId());
+        return jwtUtil.generateToken(member.getUserId(), member.getMemberGrade());
     }
 
 
