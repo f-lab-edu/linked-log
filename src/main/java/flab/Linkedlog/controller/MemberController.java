@@ -19,9 +19,7 @@ public class MemberController {
 
     @PostMapping(value = "/signup")
     public ResponseEntity<String> createMember(@RequestBody @Validated SignUpDto signUpDto) {
-
-    memberService.signUp(signUpDto);
-
+        memberService.signUp(signUpDto);
         return ResponseEntity.ok("회원가입 성공");
     }
 
@@ -30,7 +28,6 @@ public class MemberController {
     public ResponseEntity<String> login(@RequestBody @Validated LogInDto loginDto) {
 
         String token = memberService.login(loginDto);
-
         return ResponseEntity.ok(token);
 
     }

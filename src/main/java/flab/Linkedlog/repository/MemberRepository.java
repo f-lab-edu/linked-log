@@ -1,50 +1,19 @@
 package flab.Linkedlog.repository;
 
 import flab.Linkedlog.entity.Member;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
-import java.util.UUID;
+import java.util.Optional;
+
 
 @Repository
-public class MemberRepository {
+public interface MemberRepository extends JpaRepository<Member, Long> {
 
-    @PersistenceContext
-    private EntityManager em;
+    // 사용자 정의 메서드 정의
+    Optional<Member> findByUserId(String userId); // userId로 검색
 
-
-    public void save (Member member) {
-        em.persist(member);
-    }
-
-    public Member findById(UUID id) {
-        return em.find(Member.class, id);
-    }
-
-    public Member findByUserId(String userId) {
-        List<Member> members = em.createQuery("select m from Member m where m.userId = :userId", Member.class)
-                .setParameter("userId", userId)
-                .getResultList();
-
-        if (members.isEmpty()) {
-            return null;
-        } else if (members.size() == 1) {
-            return members.get(0);
-        } else {
-            throw new IllegalStateException("There are more than one member with userId = " + userId);
-        }
-    }
-
-    public List<Member> findAll() {
-        return em.createQuery("select m from Member m", Member.class)
-                .getResultList();
-    }
-
-    public void delete (Member member) {
-        em.remove(member);
-    }
-
-
+    // 추가적으로 필요한 쿼리 메서드를 정의할 수 있습니다.
 }
+
+
