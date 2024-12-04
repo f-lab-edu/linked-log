@@ -19,7 +19,6 @@ import java.util.List;
 @RequiredArgsConstructor
 public class CategoryController {
 
-    Logger logger = LoggerFactory.getLogger(CategoryController.class);
     private final CategoryService categoryService;
 
     @PostMapping(value = "/admin-v1/addcategory")

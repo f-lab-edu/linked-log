@@ -23,7 +23,6 @@ import java.util.stream.Collectors;
 public class CategoryService {
 
     private final CategoryRepository categoryRepository;
-    Logger logger = LoggerFactory.getLogger(CategoryService.class);
 
     // 카테고리 추가 (관리자)
     public UUID addCategory(AddCategoryDto addCategoryDto) {
