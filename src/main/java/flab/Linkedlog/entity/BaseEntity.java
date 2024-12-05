@@ -23,8 +23,7 @@ public abstract class BaseEntity {
     @Column(nullable = false)
     private LocalDateTime updatedAt;
 
-    private LocalDateTime deletedAt;
-
+/*
     public void markAsDeleted() {
         this.deletedAt = LocalDateTime.now();
     }
@@ -32,5 +31,5 @@ public abstract class BaseEntity {
     public void restoreAfterDeletion() {
         this.deletedAt = null;
     }
-
+*/
 }

@@ -10,7 +10,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.UUID;
+import java.util.Optional;
 
 @Service
 @Transactional
@@ -22,7 +22,7 @@ public class MemberService {
     private final JwtUtil jwtUtil;
 
     // 회원가입
-    public UUID signUp(SignUpDto signUpDto) {
+    public Long signUp(SignUpDto signUpDto) {
 
         String userId = signUpDto.getUserId();
         String rawPassword = signUpDto.getPassword();
@@ -41,8 +41,8 @@ public class MemberService {
     }
 
     public void validateDuplicateMember(Member member) {
-        Member findMember = memberRepository.findByUserId(member.getUserId());
-        if (findMember != null) {
+        Optional<Member> findMember = memberRepository.findByUserId(member.getUserId());
+        if (findMember.isPresent()) {
             throw new IllegalStateException("이미 존재하는 회원입니다.");
         }
     }
@@ -52,7 +52,9 @@ public class MemberService {
 
         String userId = logInDto.getUserId();
         String password = logInDto.getPassword();
-        Member member = memberRepository.findByUserId(userId);
+        Member member = memberRepository.findByUserId(userId)
+                .orElseThrow(() -> new RuntimeException("User Not Found")
+                );
 
         if (member == null) {
             throw new RuntimeException("User not found");
@@ -64,7 +66,6 @@ public class MemberService {
 
         return jwtUtil.generateToken(member.getUserId(), member.getMemberGrade());
     }
-
 
 
 }

@@ -6,8 +6,6 @@ import flab.Linkedlog.dto.category.CategoryListDto;
 import flab.Linkedlog.dto.category.DeleteCategoryDto;
 import flab.Linkedlog.service.CategoryService;
 import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -56,7 +54,7 @@ public class CategoryController {
     @PutMapping(value = "/admin-v1/deletecategory")
     public ResponseEntity<ApiResponse<Void>> deleteCategories(
             @RequestBody List<DeleteCategoryDto> categoryDtos) {
-            categoryService.deleteCategories(categoryDtos);
+        categoryService.deleteCategories(categoryDtos);
         return ResponseEntity.ok(
                 ApiResponse.<Void>builder()
                         .success(true)
@@ -68,7 +66,7 @@ public class CategoryController {
     @PutMapping(value = "/admin-v1/restorecategory")
     public ResponseEntity<ApiResponse<Void>> modifyCategories(
             @RequestBody List<DeleteCategoryDto> categoryDtos) {
-            categoryService.restoreCategories(categoryDtos);
+        categoryService.restoreCategories(categoryDtos);
         return ResponseEntity.ok(
                 ApiResponse.<Void>builder()
                         .success(true)

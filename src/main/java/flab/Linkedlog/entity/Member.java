@@ -7,10 +7,9 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
 
-import java.util.UUID;
+import java.time.LocalDateTime;
+
 
 @Entity
 @Getter
@@ -18,10 +17,9 @@ import java.util.UUID;
 public class Member extends BaseEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(unique = true, nullable = false)
-    @JdbcTypeCode(SqlTypes.VARCHAR)
-    private UUID id;
+    private Long id;
 
     @Column(unique = true, nullable = false)
     private String userId;
@@ -48,6 +46,8 @@ public class Member extends BaseEntity {
 
     @Column(nullable = false)
     private int cashPoint;
+
+    private LocalDateTime deletedAt;
 
     @PrePersist
     public void prePersist() {

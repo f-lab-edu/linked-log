@@ -54,9 +54,9 @@ public class JwtUtil {
         logger.info("Expiration Duration (toHours): {} hours", expirationDuration.toHours());
 
 
-        Date issuedAt = Date.from(now.toInstant()); // 발급 시간
-        ZonedDateTime expirationZonedDateTime = now.plus(Duration.ofDays(1)); // 만료 시간 (ZonedDateTime)
-        Date expiration = Date.from(expirationZonedDateTime.toInstant()); // 만료 시간 (Date)
+        Date issuedAt = Date.from(now.toInstant());
+        ZonedDateTime expirationZonedDateTime = now.plus(Duration.ofDays(1));
+        Date expiration = Date.from(expirationZonedDateTime.toInstant());
 
         // 만료 시간 계산 과정 로그 출력
         logger.info("Expiration Time (ZonedDateTime): {}", expirationZonedDateTime);

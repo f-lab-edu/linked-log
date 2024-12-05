@@ -9,10 +9,9 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
-import java.util.UUID;
 
 @Repository
-public interface CategoryRepository extends JpaRepository<Category, UUID> {
+public interface CategoryRepository extends JpaRepository<Category, Long> {
 
     // save
     // findById
@@ -46,12 +45,12 @@ public interface CategoryRepository extends JpaRepository<Category, UUID> {
     // 일괄 삭제(최적화)
     @Modifying(clearAutomatically = true)
     @Query("UPDATE Category c SET c.deletedAt = CURRENT_TIMESTAMP WHERE c.id IN :ids")
-    void batchDeleteCategory(@Param("ids") List<UUID> ids);
+    void batchDeleteCategory(@Param("ids") List<Long> ids);
 
 
     @Modifying(clearAutomatically = true)
     @Query("UPDATE Category c SET c.deletedAt = null WHERE c.id IN :ids")
-    void batchRestoreCategory(@Param("ids") List<UUID> ids);
+    void batchRestoreCategory(@Param("ids") List<Long> ids);
 
 
 }

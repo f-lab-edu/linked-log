@@ -5,10 +5,8 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
 
-import java.util.UUID;
+import java.time.LocalDateTime;
 
 @Entity
 @Getter
@@ -16,17 +14,25 @@ import java.util.UUID;
 public class Category extends BaseEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(unique = true, nullable = false)
-    @JdbcTypeCode(SqlTypes.VARCHAR)
-    private UUID id;
+    private Long id;
 
     @Column(nullable = false)
     private String name;
+
+    private LocalDateTime deletedAt;
 
     @Builder
     public Category(String name) {
         this.name = name;
     }
 
+    public void restoreAfterDeletion() {
+        deletedAt = null;
+    }
+
+    public void markAsDeleted() {
+        deletedAt = LocalDateTime.now();
+    }
 }

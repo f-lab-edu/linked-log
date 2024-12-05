@@ -5,21 +5,20 @@ import lombok.Builder;
 import lombok.Data;
 
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 @Data
 @Builder
 @Schema(description = "카테고리 정보를 담고 있는 DTO")
 public class CategoryListDto {
 
-    public CategoryListDto(UUID id, String categoryName, LocalDateTime createdAt) {
+    public CategoryListDto(Long id, String categoryName, LocalDateTime createdAt) {
         this.id = id;
         this.categoryName = categoryName;
         this.createdAt = createdAt;
     }
 
-    @Schema(description = "카테고리 UUID", example = "123e4567-e89b-12d3-a456-426614174000")
-    private UUID id;
+    @Schema(description = "카테고리 Long", example = "123e4567-e89b-12d3-a456-426614174000")
+    private Long id;
 
     @Schema(description = "카테고리 이름", example = "Technology")
     private String categoryName;

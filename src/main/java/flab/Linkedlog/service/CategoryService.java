@@ -9,12 +9,9 @@ import flab.Linkedlog.repository.CategoryRepository;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -25,7 +22,7 @@ public class CategoryService {
     private final CategoryRepository categoryRepository;
 
     // 카테고리 추가 (관리자)
-    public UUID addCategory(AddCategoryDto addCategoryDto) {
+    public Long addCategory(AddCategoryDto addCategoryDto) {
 
         String categoryName = addCategoryDto.getCategoryName();
 
@@ -82,7 +79,7 @@ public class CategoryService {
 
     // 다중 삭제
     public void deleteCategories(List<DeleteCategoryDto> deleteCategoryDtos) {
-        List<UUID> categoryIds = deleteCategoryDtos.stream()
+        List<Long> categoryIds = deleteCategoryDtos.stream()
                 .map(DeleteCategoryDto::getId)
                 .toList();
 
@@ -91,7 +88,7 @@ public class CategoryService {
 
     // 다중 복구
     public void restoreCategories(List<DeleteCategoryDto> deleteCategoryDtos) {
-        List<UUID> categoryIds = deleteCategoryDtos.stream()
+        List<Long> categoryIds = deleteCategoryDtos.stream()
                 .map(DeleteCategoryDto::getId)
                 .toList();
 

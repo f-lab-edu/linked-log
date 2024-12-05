@@ -28,6 +28,7 @@ public class SecurityConfiguration {
 
     private final JwtUtil jwtUtil;
 
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
@@ -70,7 +71,6 @@ public class SecurityConfiguration {
     public AuthenticationManager authenticationManager(AuthenticationConfiguration authConfig) throws Exception {
         return authConfig.getAuthenticationManager();
     }
-
 
 
     private CorsConfigurationSource corsConfigurationSource() {

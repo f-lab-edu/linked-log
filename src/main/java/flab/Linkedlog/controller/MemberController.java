@@ -18,20 +18,17 @@ public class MemberController {
     private final MemberService memberService;
 
     @PostMapping(value = "/signup")
-        public ResponseEntity<String> createMember(@RequestBody @Validated SignUpDto signUpDto) {
-
+    public ResponseEntity<String> createMember(@RequestBody @Validated SignUpDto signUpDto) {
         memberService.signUp(signUpDto);
-
-            return ResponseEntity.ok("회원가입 성공");
+        return ResponseEntity.ok("회원가입 성공");
     }
 
 
     @PostMapping(value = "/login")
-        public ResponseEntity<String> login(@RequestBody @Validated LogInDto loginDto) {
+    public ResponseEntity<String> login(@RequestBody @Validated LogInDto loginDto) {
 
-            String token = memberService.login(loginDto);
-
-            return ResponseEntity.ok(token);
+        String token = memberService.login(loginDto);
+        return ResponseEntity.ok(token);
 
     }
 
