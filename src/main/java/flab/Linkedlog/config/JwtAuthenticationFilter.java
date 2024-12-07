@@ -6,8 +6,6 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -20,7 +18,6 @@ import java.util.List;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
-    Logger logger = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
@@ -29,17 +26,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         if (header != null && header.startsWith("Bearer ")) {
             String token = header.substring(7);
-            logger.info("JWT token: {}", token);
 
             try {
                 String username = jwtUtil.validateToken(token);
                 String role = (String) jwtUtil.getClaimsFromToken(token).get("roles");
+                Long memberId = jwtUtil.getMemberIdFromToken(token);
 
                 if (username != null) {
-                    logger.info("Token validated successfully for User: {}", username);
                     SimpleGrantedAuthority authority = new SimpleGrantedAuthority(role);
+                    CustomUserDetails userDetails = new CustomUserDetails(memberId, username);
                     SecurityContextHolder.getContext().setAuthentication(
-                            new UsernamePasswordAuthenticationToken(username, null, List.of(authority))
+                            new UsernamePasswordAuthenticationToken(userDetails, null, List.of(authority))
                     );
                 }
             } catch (RuntimeException e) {

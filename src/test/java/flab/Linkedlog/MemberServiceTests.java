@@ -89,7 +89,7 @@ class MemberServiceTest {
 
         // When
         when(memberRepository.findByUserId("userIdEx")).thenReturn(Optional.of(member));
-        when(jwtUtil.generateToken(eq("userIdEx"), any(MemberGrade.class))).thenReturn("jwtTokenString");
+        when(jwtUtil.generateToken(eq("userIdEx"), any(MemberGrade.class), eq(123L))).thenReturn("jwtTokenString");
         when(passwordEncoder.matches("passwordRaw", "passwordEncoded")).thenReturn(true);
         when(jwtProperties.getExpirationTime()).thenReturn(86400000L); // 1일 (밀리초 단위)
 
