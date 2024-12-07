@@ -18,26 +18,26 @@ public interface PostRepository extends JpaRepository<Post, Long> {
 
     // 특정 카테고리의 글을 날짜 기준 내림차순으로 조회
     @Query("""
-                SELECT p 
-                FROM Post p 
-                JOIN FETCH p.category c 
-                JOIN FETCH p.member m 
-                WHERE c.id = :categoryId 
+                SELECT p
+                FROM Post p
+                JOIN FETCH p.category c
+                JOIN FETCH p.member m
+                WHERE c.id = :categoryId
                 ORDER BY p.createdAt DESC
             """)
-    public List<Post> findPostListInCategory(@Param("categoryId") Long category);
+    List<Post> findPostListInCategory(@Param("categoryId") Long category);
 
 
     @Query("""
-            SELECT p 
-            FROM Post p 
-            JOIN FETCH p.category c 
-            JOIN FETCH p.member m 
-            WHERE c.id = :categoryId 
+            SELECT p
+            FROM Post p
+            JOIN FETCH p.category c
+            JOIN FETCH p.member m
+            WHERE c.id = :categoryId
               AND (p.title LIKE %:keyword% OR p.content LIKE %:keyword%)
             ORDER BY p.createdAt DESC
             """)
-    public List<Post> findPostListInCategoryContainKeyword(
+    List<Post> findPostListInCategoryContainKeyword(
             @Param("categoryId") Long categoryId,
             @Param("keyword") String keyword);
 

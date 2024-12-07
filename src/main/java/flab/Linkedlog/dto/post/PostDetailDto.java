@@ -4,7 +4,6 @@ import jakarta.validation.constraints.NotEmpty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
@@ -38,10 +37,6 @@ public class PostDetailDto {
 
     @NotEmpty(message = "유료 금액")
     private int price;
-
-    public PostDetailDto(Long id, String title, String content, LocalDateTime createdAt, String name, String nickName, int viewes, int price) {
-
-    }
 
 
 }
