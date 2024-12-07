@@ -32,7 +32,13 @@ public class MemberService {
         String phone = signUpDto.getPhone1() + "-" +
                 signUpDto.getPhone2() + "-" + signUpDto.getPhone3();
 
-        Member member = new Member(userId, encodedPassword, nickname, email, phone);
+        Member member = Member.builder()
+                .userId(userId)
+                .password(encodedPassword)
+                .nickName(nickname)
+                .email(email)
+                .phone(phone)
+                .build();
 
         validateDuplicateMember(member);
         memberRepository.save(member);
@@ -43,7 +49,7 @@ public class MemberService {
     public void validateDuplicateMember(Member member) {
         Optional<Member> findMember = memberRepository.findByUserId(member.getUserId());
         if (findMember.isPresent()) {
-            throw new IllegalStateException("이미 존재하는 회원입니다.");
+            throw new IllegalStateException("User Already Exists.");
         }
     }
 
@@ -53,8 +59,7 @@ public class MemberService {
         String userId = logInDto.getUserId();
         String password = logInDto.getPassword();
         Member member = memberRepository.findByUserId(userId)
-                .orElseThrow(() -> new RuntimeException("User Not Found")
-                );
+                .orElseThrow(() -> new RuntimeException("User Not Found"));
 
         if (member == null) {
             throw new RuntimeException("User not found");
