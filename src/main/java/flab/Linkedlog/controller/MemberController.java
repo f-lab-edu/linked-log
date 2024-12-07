@@ -18,9 +18,9 @@ public class MemberController {
     private final MemberService memberService;
 
     @PostMapping(value = "/signup")
-    public ResponseEntity<String> createMember(@RequestBody @Validated SignUpDto signUpDto) {
+    public ResponseEntity<Boolean> createMember(@RequestBody @Validated SignUpDto signUpDto) {
         memberService.signUp(signUpDto);
-        return ResponseEntity.ok("회원가입 성공");
+        return ResponseEntity.ok(true);
     }
 
 

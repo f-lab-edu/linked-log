@@ -46,8 +46,13 @@ class MemberServiceTest {
         SignUpDto signUpDto = new SignUpDto("userIdEx", "passwordRaw",
                 "nicknameEx", "email", "email.com",
                 "010", "1111", "2222");
-        Member member = new Member("userIdEx", "passwordEncoded",
-                "nicknameEx", "email@email.com", "010-1111-2222");
+        Member member = Member.builder()
+                .userId("userIdEx")
+                .password("passwordEncoded")
+                .nickName("nicknameEx")
+                .email("email@email.com")
+                .phone("010-1111-2222")
+                .build();
 
         // When
         when(passwordEncoder.encode("passwordRaw")).thenReturn("passwordEncoded");
@@ -64,8 +69,13 @@ class MemberServiceTest {
         SignUpDto signUpDto = new SignUpDto("userIdEx", "passwordRaw",
                 "nicknameEx", "email", "email.com",
                 "010", "1111", "2222");
-        Member member = new Member("userIdEx", "passwordEncoded",
-                "nicknameEx", "email@email.com", "010-1111-2222");
+        Member member = Member.builder()
+                .userId("userIdEx")
+                .password("passwordEncoded")
+                .nickName("nicknameEx")
+                .email("email@email.com")
+                .phone("010-1111-2222")
+                .build();
 
         //When
         when(memberRepository.findByUserId("userIdEx")).thenReturn(Optional.of(member));
@@ -78,8 +88,13 @@ class MemberServiceTest {
     void loginTest() {
         // Given
         LogInDto logInDto = new LogInDto("userIdEx", "passwordRaw");
-        Member member = new Member("userIdEx", "passwordEncoded",
-                "nicknameEx", "email@email.com", "010-1111-2222");
+        Member member = Member.builder()
+                .userId("userIdEx")
+                .password("passwordEncoded")
+                .nickName("nicknameEx")
+                .email("email@email.com")
+                .phone("010-1111-2222")
+                .build();
 
         // When
         when(memberRepository.findByUserId("userIdEx")).thenReturn(Optional.of(member));
@@ -108,8 +123,13 @@ class MemberServiceTest {
     void invalidPasswordTest() {
         // Given
         LogInDto logInDto = new LogInDto("userIdEx", "passwordRaw");
-        Member member = new Member("userIdEx", "passwordEncoded",
-                "nicknameEx", "email@email.com", "010-1111-2222");
+        Member member = Member.builder()
+                .userId("userIdEx")
+                .password("passwordEncoded")
+                .nickName("nicknameEx")
+                .email("email@email.com")
+                .phone("010-1111-2222")
+                .build();
 
         //When
         when(memberRepository.findByUserId("userIdEx")).thenReturn(Optional.of(member));
