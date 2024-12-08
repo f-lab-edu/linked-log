@@ -1,15 +1,21 @@
 package flab.Linkedlog.service;
 
 import flab.Linkedlog.dto.member.LogInDto;
+import flab.Linkedlog.dto.member.MyPageDto;
 import flab.Linkedlog.dto.member.SignUpDto;
+import flab.Linkedlog.dto.post.PostDetailDto;
 import flab.Linkedlog.entity.Member;
+import flab.Linkedlog.entity.Post;
 import flab.Linkedlog.repository.MemberRepository;
 import flab.Linkedlog.util.JwtUtil;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.Optional;
 
 @Service
@@ -20,9 +26,10 @@ public class MemberService {
     private final MemberRepository memberRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
+    private final S3Service s3Service;
 
     // 회원가입
-    public Long signUp(SignUpDto signUpDto) {
+    public Long signUp(SignUpDto signUpDto, MultipartFile profileImage) throws IOException {
 
         String userId = signUpDto.getUserId();
         String rawPassword = signUpDto.getPassword();
@@ -33,6 +40,12 @@ public class MemberService {
                 signUpDto.getPhone2() + "-" + signUpDto.getPhone3();
 
         Member member = new Member(userId, encodedPassword, nickname, email, phone);
+
+        if (profileImage != null && !profileImage.isEmpty()) {
+            String imageKey = s3Service.uploadFile(profileImage);
+            member.storeProfileImage(imageKey);
+        }
+
 
         validateDuplicateMember(member);
         memberRepository.save(member);
@@ -65,6 +78,19 @@ public class MemberService {
         }
 
         return jwtUtil.generateToken(member.getUserId(), member.getMemberGrade(), member.getId());
+    }
+
+    // 마이페이지
+    @Transactional(readOnly = true)
+    public Optional<MyPageDto> getMyPageById(Long memberId) {
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new EntityNotFoundException("Post not found"));
+        String profileImageUrl = s3Service.getFileUrl(member.getProfileImage());
+
+        return Optional.of(new MyPageDto(
+                profileImageUrl,
+                member.getNickName()
+        ));
     }
 
 

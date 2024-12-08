@@ -30,6 +30,9 @@ public class Member extends BaseEntity {
     @Column(unique = true, nullable = false)
     private String nickName;
 
+    @Column(nullable = false)
+    private String profileImage;
+
     @Column(unique = true, nullable = false)
     private String email;
 
@@ -65,4 +68,9 @@ public class Member extends BaseEntity {
         this.email = email;
         this.phone = phone;
     }
+
+    public void storeProfileImage(String profileImage) {
+        this.profileImage = profileImage;
+    }
+
 }

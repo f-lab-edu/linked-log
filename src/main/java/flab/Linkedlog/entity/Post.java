@@ -46,6 +46,15 @@ public class Post extends BaseEntity {
         this.deletedAt = null;
         this.views = 0;
     }
-    
+
+    @Builder
+    public Post(Category category, Member member, String title, String content, int views, int price) {
+        this.category = category;
+        this.member = member;
+        this.title = title;
+        this.content = content;
+        this.views = views;
+        this.price = price;
+    }
 
 }

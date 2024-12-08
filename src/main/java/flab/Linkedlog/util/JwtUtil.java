@@ -40,7 +40,7 @@ public class JwtUtil {
         Duration expirationDuration = Duration.ofMillis(jwtProperties.getExpirationTime()); // 만료 기간
 
         Date issuedAt = Date.from(now.toInstant());
-        ZonedDateTime expirationZonedDateTime = now.plus(Duration.ofDays(1));
+        ZonedDateTime expirationZonedDateTime = now.plus(expirationDuration);
         Date expiration = Date.from(expirationZonedDateTime.toInstant());
 
         return Jwts.builder()
@@ -75,7 +75,7 @@ public class JwtUtil {
                 .parseClaimsJws(token)
                 .getBody();
     }
-    
+
     public Long getMemberIdFromToken(String token) {
         Claims claims = getClaimsFromToken(token);
         Object memberIdObj = claims.get("memberId");
