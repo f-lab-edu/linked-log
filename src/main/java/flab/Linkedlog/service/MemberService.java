@@ -1,7 +1,7 @@
 package flab.Linkedlog.service;
 
-import flab.Linkedlog.dto.member.LogInDto;
-import flab.Linkedlog.dto.member.SignUpDto;
+import flab.Linkedlog.dto.member.LogInRequest;
+import flab.Linkedlog.dto.member.SignUpRequest;
 import flab.Linkedlog.entity.Member;
 import flab.Linkedlog.repository.MemberRepository;
 import flab.Linkedlog.util.JwtUtil;
@@ -22,7 +22,7 @@ public class MemberService {
     private final JwtUtil jwtUtil;
 
     // 회원가입
-    public Long signUp(SignUpDto signUpDto) {
+    public Long signUp(SignUpRequest signUpDto) {
 
         String userId = signUpDto.getUserId();
         String rawPassword = signUpDto.getPassword();
@@ -54,10 +54,10 @@ public class MemberService {
     }
 
     // 로그인
-    public String login(LogInDto logInDto) {
+    public String login(LogInRequest logInRequest) {
 
-        String userId = logInDto.getUserId();
-        String password = logInDto.getPassword();
+        String userId = logInRequest.getUserId();
+        String password = logInRequest.getPassword();
         Member member = memberRepository.findByUserId(userId)
                 .orElseThrow(() -> new RuntimeException("User Not Found"));
 

@@ -16,8 +16,7 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
     // save
     // findById
     // delete
-
-
+    
     // 이름으로 검색
     @Query("SELECT c FROM Category c WHERE c.name LIKE %:name%")
     List<Category> findByContainingName(@Param("name") String name);
@@ -47,7 +46,7 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
     @Query("UPDATE Category c SET c.deletedAt = CURRENT_TIMESTAMP WHERE c.id IN :ids")
     void batchDeleteCategory(@Param("ids") List<Long> ids);
 
-
+    // 일괄 복구(최적화)
     @Modifying(clearAutomatically = true)
     @Query("UPDATE Category c SET c.deletedAt = null WHERE c.id IN :ids")
     void batchRestoreCategory(@Param("ids") List<Long> ids);

@@ -1,9 +1,9 @@
 package flab.Linkedlog.service;
 
 
-import flab.Linkedlog.dto.category.AddCategoryDto;
-import flab.Linkedlog.dto.category.CategoryListDto;
-import flab.Linkedlog.dto.category.DeleteCategoryDto;
+import flab.Linkedlog.dto.category.CategoryCreateRequest;
+import flab.Linkedlog.dto.category.CategoryListResponse;
+import flab.Linkedlog.dto.category.CategoryDeleteRequest;
 import flab.Linkedlog.entity.Category;
 import flab.Linkedlog.repository.CategoryRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -22,9 +22,9 @@ public class CategoryService {
     private final CategoryRepository categoryRepository;
 
     // 카테고리 추가 (관리자)
-    public Long addCategory(AddCategoryDto addCategoryDto) {
+    public Long addCategory(CategoryCreateRequest categoryCreateRequest) {
 
-        String categoryName = addCategoryDto.getCategoryName();
+        String categoryName = categoryCreateRequest.getCategoryName();
 
         Category category = new Category(categoryName);
         categoryRepository.save(category);
@@ -34,10 +34,10 @@ public class CategoryService {
 
 
     // 카테고리 목록 보기 (관리자)
-    public List<CategoryListDto> getAllCategory() {
+    public List<CategoryListResponse> getAllCategory() {
         return categoryRepository.findAllActive().stream()
                 .map(category -> {
-                    return new CategoryListDto(
+                    return new CategoryListResponse(
                             category.getId(),
                             category.getName(),
                             category.getCreatedAt()
@@ -46,50 +46,62 @@ public class CategoryService {
                 .collect(Collectors.toList());
     }
 
+    // 삭제 카테고리 목록 (관리자)
+    public List<CategoryListResponse> getAllCategoryDeleted() {
+        return categoryRepository.findAllDeleted().stream()
+                .map(category -> {
+                    return new CategoryListResponse(
+                            category.getId(),
+                            category.getName(),
+                            category.getCreatedAt()
+                    );
+                })
+                .collect(Collectors.toList());
+    }
+
+
     // 카테고리 삭제(숨김) (관리자)
-    public void deleteCategory(DeleteCategoryDto deleteCategoryDto) {
-        Category category = categoryRepository.findById(deleteCategoryDto.getId())
+    public void deleteCategory(CategoryDeleteRequest categoryDeleteRequest) {
+        Category category = categoryRepository.findById(categoryDeleteRequest.getId())
                 .orElseThrow(() -> new EntityNotFoundException("Category not found"));
+
+        // 이미 삭제된 카테고리인지 확인
+        if (category.getDeletedAt() != null) {
+            throw new IllegalStateException("이미 삭제된 카테고리입니다: " + category.getId());
+        }
 
         categoryRepository.eraseCategory(category);
         categoryRepository.save(category);
     }
 
-    // 삭제 카테고리 목록 (관리자)
-    public List<CategoryListDto> getAllCategoryDeleted() {
-        return categoryRepository.findAllDeleted().stream()
-                .map(category -> {
-                    return new CategoryListDto(
-                            category.getId(),
-                            category.getName(),
-                            category.getCreatedAt()
-                    );
-                })
-                .collect(Collectors.toList());
-    }
 
     // 삭제 카테고리 복구 (관리자)
-    public void restoreCategory(DeleteCategoryDto deleteCategoryDto) {
-        Category category = categoryRepository.findById(deleteCategoryDto.getId())
+    public void restoreCategory(CategoryDeleteRequest categoryDeleteRequest) {
+        Category category = categoryRepository.findById(categoryDeleteRequest.getId())
                 .orElseThrow(() -> new EntityNotFoundException("Category not found"));
+
+        // 삭제되지 않은 카테고리인지 확인
+        if (category.getDeletedAt() == null) {
+            throw new IllegalStateException("삭제되지 않은 카테고리입니다: " + category.getId());
+        }
 
         categoryRepository.restoreCategory(category);
         categoryRepository.save(category);
     }
 
     // 다중 삭제
-    public void deleteCategories(List<DeleteCategoryDto> deleteCategoryDtos) {
-        List<Long> categoryIds = deleteCategoryDtos.stream()
-                .map(DeleteCategoryDto::getId)
+    public void deleteCategories(List<CategoryDeleteRequest> categoryDeleteRequests) {
+        List<Long> categoryIds = categoryDeleteRequests.stream()
+                .map(CategoryDeleteRequest::getId)
                 .toList();
 
         categoryRepository.batchDeleteCategory(categoryIds);
     }
 
     // 다중 복구
-    public void restoreCategories(List<DeleteCategoryDto> deleteCategoryDtos) {
-        List<Long> categoryIds = deleteCategoryDtos.stream()
-                .map(DeleteCategoryDto::getId)
+    public void restoreCategories(List<CategoryDeleteRequest> categoryDeleteRequests) {
+        List<Long> categoryIds = categoryDeleteRequests.stream()
+                .map(CategoryDeleteRequest::getId)
                 .toList();
 
         categoryRepository.batchRestoreCategory(categoryIds);

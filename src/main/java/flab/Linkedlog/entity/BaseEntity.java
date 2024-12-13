@@ -23,13 +23,4 @@ public abstract class BaseEntity {
     @Column(nullable = false)
     private LocalDateTime updatedAt;
 
-/*
-    public void markAsDeleted() {
-        this.deletedAt = LocalDateTime.now();
-    }
-
-    public void restoreAfterDeletion() {
-        this.deletedAt = null;
-    }
-*/
 }

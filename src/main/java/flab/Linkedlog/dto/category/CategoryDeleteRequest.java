@@ -8,9 +8,8 @@ import lombok.NoArgsConstructor;
 
 @Data
 @Builder
-@NoArgsConstructor
 @AllArgsConstructor
-public class DeleteCategoryDto {
+public class CategoryDeleteRequest {
 
     @NotNull
     private Long id;
