@@ -10,9 +10,7 @@ import java.util.Optional;
 @Repository
 public interface MemberRepository extends JpaRepository<Member, Long> {
 
-    // 사용자 정의 메서드 정의
-    Optional<Member> findByUserId(String userId); // userId로 검색
-
+    Optional<Member> findByUserId(String userId);
 
 }
 

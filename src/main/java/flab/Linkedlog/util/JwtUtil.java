@@ -32,15 +32,15 @@ public class JwtUtil {
 
     @PostConstruct
     public void init() {
-        TimeZone.setDefault(TimeZone.getTimeZone("Asia/Seoul")); // 기본 시간대 설정
+        TimeZone.setDefault(TimeZone.getTimeZone("Asia/Seoul"));
     }
 
-    public String generateToken(String username, MemberGrade roles, Long memberId) {
-        ZonedDateTime now = ZonedDateTime.now(ZoneId.of("Asia/Seoul")); // 현재 시간
-        Duration expirationDuration = Duration.ofMillis(jwtProperties.getExpirationTime()); // 만료 기간
+    public String generateToken(String username, MemberGrade roles) {
 
+        ZonedDateTime now = ZonedDateTime.now(ZoneId.of("Asia/Seoul"));
+        Duration expirationDuration = Duration.ofMillis(jwtProperties.getExpirationTime());
         Date issuedAt = Date.from(now.toInstant());
-        ZonedDateTime expirationZonedDateTime = now.plus(Duration.ofDays(1));
+        ZonedDateTime expirationZonedDateTime = now.plus(expirationDuration);
         Date expiration = Date.from(expirationZonedDateTime.toInstant());
 
         return Jwts.builder()
@@ -75,7 +75,7 @@ public class JwtUtil {
                 .parseClaimsJws(token)
                 .getBody();
     }
-    
+
     public Long getMemberIdFromToken(String token) {
         Claims claims = getClaimsFromToken(token);
         Object memberIdObj = claims.get("memberId");

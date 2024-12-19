@@ -1,11 +1,12 @@
 package flab.Linkedlog.service;
 
-import flab.Linkedlog.dto.member.LogInDto;
-import flab.Linkedlog.dto.member.SignUpDto;
+import flab.Linkedlog.dto.member.LogInRequest;
+import flab.Linkedlog.dto.member.SignUpRequest;
 import flab.Linkedlog.entity.Member;
 import flab.Linkedlog.repository.MemberRepository;
 import flab.Linkedlog.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,17 +23,23 @@ public class MemberService {
     private final JwtUtil jwtUtil;
 
     // 회원가입
-    public Long signUp(SignUpDto signUpDto) {
+    public Long signUp(SignUpRequest signUpDto) {
 
         String userId = signUpDto.getUserId();
         String rawPassword = signUpDto.getPassword();
-        String encodedPassword = passwordEncoder.encode(rawPassword); // 비밀번호 암호화
+        String encodedPassword = passwordEncoder.encode(rawPassword);
         String nickname = signUpDto.getNickname();
         String email = signUpDto.getEmail1() + "@" + signUpDto.getEmail2();
         String phone = signUpDto.getPhone1() + "-" +
                 signUpDto.getPhone2() + "-" + signUpDto.getPhone3();
 
-        Member member = new Member(userId, encodedPassword, nickname, email, phone);
+        Member member = Member.builder()
+                .userId(userId)
+                .password(encodedPassword)
+                .nickName(nickname)
+                .email(email)
+                .phone(phone)
+                .build();
 
         validateDuplicateMember(member);
         memberRepository.save(member);
@@ -43,25 +50,27 @@ public class MemberService {
     public void validateDuplicateMember(Member member) {
         Optional<Member> findMember = memberRepository.findByUserId(member.getUserId());
         if (findMember.isPresent()) {
-            throw new IllegalStateException("이미 존재하는 회원입니다.");
+            throw new IllegalStateException("User Already Exists.");
         }
     }
 
     // 로그인
-    public String login(LogInDto logInDto) {
+    public String login(LogInRequest logInRequest) {
 
-        String userId = logInDto.getUserId();
-        String password = logInDto.getPassword();
+        String userId = logInRequest.getUserId();
+        String password = logInRequest.getPassword();
         Member member = memberRepository.findByUserId(userId)
-                .orElseThrow(() -> new RuntimeException("User Not Found")
-                );
+                .orElseThrow(() -> new BadCredentialsException("User Not Found") {
+                });
 
         if (member == null) {
-            throw new RuntimeException("User not found");
+            throw new BadCredentialsException("User not found") {
+            };
         }
 
         if (!passwordEncoder.matches(password, member.getPassword())) {
-            throw new RuntimeException("Invalid credentials");
+            throw new BadCredentialsException("Invalid credentials") {
+            };
         }
 
         return jwtUtil.generateToken(member.getUserId(), member.getMemberGrade(), member.getId());

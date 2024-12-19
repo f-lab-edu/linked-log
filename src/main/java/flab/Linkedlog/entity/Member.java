@@ -8,8 +8,8 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
-
 
 @Entity
 @Getter
@@ -38,31 +38,29 @@ public class Member extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private MemberGrade memberGrade;
+    private MemberGrade memberGrade = MemberGrade.GENERAL;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private MemberStatus memberStatus;
+    private MemberStatus memberStatus = MemberStatus.NORMAL;
 
     @Column(nullable = false)
-    private int cashPoint;
+    private BigDecimal cashPoint = BigDecimal.valueOf(0);
 
     private LocalDateTime deletedAt;
 
-    @PrePersist
-    public void prePersist() {
-        this.cashPoint = 0;
-        this.memberStatus = MemberStatus.NORMAL;
-        this.memberGrade = MemberGrade.GENERAL;
-    }
 
     @Builder
     public Member(String userId, String password, String nickName,
-                  String email, String phone) {
+                  String email, String phone, MemberGrade memberGrade,
+                  MemberStatus memberStatus, int cashPoint) {
         this.userId = userId;
         this.password = password;
         this.nickName = nickName;
         this.email = email;
         this.phone = phone;
+        this.memberGrade = memberGrade != null ? memberGrade : MemberGrade.GENERAL;
+        this.memberStatus = memberStatus != null ? memberStatus : MemberStatus.NORMAL;
+        this.cashPoint = BigDecimal.valueOf(cashPoint != 0 ? cashPoint : 0);
     }
 }

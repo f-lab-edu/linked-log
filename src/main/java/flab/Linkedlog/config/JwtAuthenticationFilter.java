@@ -32,6 +32,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 String role = (String) jwtUtil.getClaimsFromToken(token).get("roles");
                 Long memberId = jwtUtil.getMemberIdFromToken(token);
 
+                if (role == null || role.isEmpty()) {
+                    throw new RuntimeException("empty roles in JWT token");
+                }
+
                 if (username != null) {
                     SimpleGrantedAuthority authority = new SimpleGrantedAuthority(role);
                     CustomUserDetails userDetails = new CustomUserDetails(memberId, username);
