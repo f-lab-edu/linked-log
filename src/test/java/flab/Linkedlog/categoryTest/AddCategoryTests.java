@@ -1,8 +1,11 @@
 package flab.Linkedlog.categoryTest;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import flab.Linkedlog.controller.response.ApiResponse;
 import flab.Linkedlog.dto.category.CategoryCreateRequest;
+import flab.Linkedlog.entity.Category;
 import flab.Linkedlog.entity.enums.MemberGrade;
+import flab.Linkedlog.repository.CategoryRepository;
 import flab.Linkedlog.util.JwtUtil;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -11,8 +14,12 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -30,6 +37,9 @@ public class AddCategoryTests {
     @Autowired
     private ObjectMapper objectMapper;
 
+    @Autowired
+    private CategoryRepository categoryRepository;
+
     @Test
     @DisplayName("Admin 계정으로 카테고리 추가 성공")
     void addCategoryWithAdminRoleTest() throws Exception {
@@ -41,14 +51,28 @@ public class AddCategoryTests {
                 .categoryName("Admin Category")
                 .build();
 
-        // When & Then
-        mockMvc.perform(post("/admin/addcategory")
+        // When
+        MvcResult result = mockMvc.perform(post("/admin/addcategory")
                         .header("Authorization", "Bearer " + adminToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isOk()) // Then: 응답 상태가 200이어야 함
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.response").isNotEmpty());
+                .andReturn();
+
+        // Then
+        String jsonResponse = result.getResponse().getContentAsString();
+        ApiResponse response = objectMapper.readValue(jsonResponse, ApiResponse.class);
+
+        assertThat(result.getResponse().getStatus()).isEqualTo(200);
+        assertThat(response.isSuccess()).isTrue();
+        assertThat(response.getResponse()).isNotNull();
+
+        List<Category> categories = categoryRepository.findByContainingName("Admin Category");
+        Long categoryId = categories.get(0).getId();
+
+        Category createdCategory = categoryRepository.findById(categoryId)
+                .orElseThrow(() -> new RuntimeException("카테고리가 존재하지 않습니다"));
+
+        assertThat(createdCategory.getName()).isEqualTo("Admin Category");
     }
 
     @Test
@@ -60,13 +84,16 @@ public class AddCategoryTests {
                 .categoryName("User Category")
                 .build();
 
-        // When & Then
-        mockMvc.perform(post("/admin/addcategory")
+        // When
+        MvcResult result = mockMvc.perform(post("/admin/addcategory")
                         .header("Authorization", "Bearer " + userToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.success").doesNotExist());
+                .andReturn();
+
+        // Then
+        assertThat(result.getResponse().getStatus()).isEqualTo(403);
+        assertThat(result.getResponse().getContentAsString()).isEmpty();
     }
 
     @Test
@@ -77,13 +104,20 @@ public class AddCategoryTests {
                 .categoryName("Unauthorized Category")
                 .build();
 
-        // When &Then
-        mockMvc.perform(post("/admin/addcategory")
+        // When
+        MvcResult result = mockMvc.perform(post("/admin/addcategory")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isUnauthorized())
-                .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.error").value("Unauthorized"));
+                .andReturn();
+
+        // Then
+        String jsonResponse = result.getResponse().getContentAsString();
+        ApiResponse<?> response = objectMapper.readValue(jsonResponse, ApiResponse.class);
+
+        assertThat(result.getResponse().getStatus()).isEqualTo(401);
+        assertThat(response.isSuccess()).isFalse();
+        assertThat(response.getError()).isEqualTo("Unauthorized");
+
     }
 
 }

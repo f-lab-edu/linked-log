@@ -1,6 +1,8 @@
 package flab.Linkedlog.categoryTest;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import flab.Linkedlog.controller.response.ApiResponse;
 import flab.Linkedlog.dto.category.CategoryDeleteRequest;
 import flab.Linkedlog.entity.Category;
 import flab.Linkedlog.entity.enums.MemberGrade;
@@ -18,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -71,45 +74,64 @@ public class DeleteCategoryTests {
     @Test
     @DisplayName("1개 카테고리 삭제")
     void deleteSingleCategory() throws Exception {
-
+        //Given
         List<Category> categories = categoryRepository.findByContainingName("분류2");
         Long categoryId = categories.get(0).getId();
 
-        mockMvc.perform(put("/admin/deletecategory")
+        // When
+        String responseContent = mockMvc.perform(put("/admin/deletecategory")
                         .header("Authorization", "Bearer " + adminToken)
                         .contentType("application/json")
                         .content(objectMapper.writeValueAsString(List.of(new CategoryDeleteRequest(categoryId)))))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true));
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        // Then
+        ApiResponse<Void> apiResponse = objectMapper.readValue(responseContent, new TypeReference<>() {
+        });
+
+        assertThat(apiResponse.isSuccess()).isTrue();
+        assertThat(apiResponse.getError()).isNull();
+        assertThat(apiResponse.getMessage()).isNull();
 
         Category category = categoryRepository.findById(categoryId).orElseThrow();
-        assert category.getDeletedAt() != null;
+        assertThat(category.getDeletedAt()).isNotNull();
     }
 
-    // 1개 복구
-    @Test
-    @DisplayName("1개 카테고리 복구 (이미 삭제된 카테고리)")
-    void restoreSingleCategory() throws Exception {
 
-        List<Category> categories = categoryRepository.findByContainingName("분류1");
+    @Test
+    @DisplayName("1개 카테고리 삭제")
+    void restoreSingleCategory() throws Exception {
+        // Given
+        List<Category> categories = categoryRepository.findByContainingName("분류2");
         Long categoryId = categories.get(0).getId();
 
-        mockMvc.perform(put("/admin/restorecategory")
+        // When
+        String responseContent = mockMvc.perform(put("/admin/restorecategory")
                         .header("Authorization", "Bearer " + adminToken)
                         .contentType("application/json")
                         .content(objectMapper.writeValueAsString(List.of(new CategoryDeleteRequest(categoryId)))))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true));
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
 
-        Category restoredCategory = categoryRepository.findById(categoryId).orElseThrow();
-        assert restoredCategory.getDeletedAt() == null;
+        // Then
+        ApiResponse<Void> apiResponse = objectMapper.readValue(responseContent, new TypeReference<>() {
+        });
+
+        assertThat(apiResponse.isSuccess()).isTrue();
+        assertThat(apiResponse.getError()).isNull();
+        assertThat(apiResponse.getMessage()).isNull();
+
+        Category category = categoryRepository.findById(categoryId).orElseThrow();
+        assertThat(category.getDeletedAt()).isNull();
     }
 
-    // 다중 삭제
     @Test
     @DisplayName("다중 카테고리 삭제")
     void deleteMultipleCategories() throws Exception {
-        // 삭제할 카테고리 ID 목록
+        // Given
         List<Category> categories = categoryRepository.findByContainingName("분류2");
         Long categoryId1 = categories.get(0).getId();
         categories = categoryRepository.findByContainingName("분류4");
@@ -117,27 +139,52 @@ public class DeleteCategoryTests {
         categories = categoryRepository.findByContainingName("분류8");
         Long categoryId3 = categories.get(0).getId();
 
-        mockMvc.perform(put("/admin/deletecategory")
+        List<CategoryDeleteRequest> deleteRequests = List.of(
+                new CategoryDeleteRequest(categoryId1),
+                new CategoryDeleteRequest(categoryId2),
+                new CategoryDeleteRequest(categoryId3)
+        );
+
+        // When
+        String responseContent = mockMvc.perform(put("/admin/deletecategory")
                         .header("Authorization", "Bearer " + adminToken)
                         .contentType("application/json")
-                        .content(objectMapper.writeValueAsString(List.of(
-                                new CategoryDeleteRequest(categoryId1),
-                                new CategoryDeleteRequest(categoryId2),
-                                new CategoryDeleteRequest(categoryId3)
-                        ))))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true));
+                        .content(objectMapper.writeValueAsString(deleteRequests)))
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
 
-        assert categoryRepository.findById(categoryId1).get().getDeletedAt() != null;
-        assert categoryRepository.findById(categoryId2).get().getDeletedAt() != null;
-        assert categoryRepository.findById(categoryId3).get().getDeletedAt() != null;
+        // Then
+        ApiResponse<Void> apiResponse = objectMapper.readValue(responseContent, new TypeReference<>() {
+        });
+
+        assertThat(apiResponse.isSuccess()).isTrue();
+        assertThat(apiResponse.getError()).isNull();
+        assertThat(apiResponse.getMessage()).isNull();
+
+        assertThat(categoryRepository.findById(categoryId1))
+                .isPresent()
+                .get()
+                .extracting(Category::getDeletedAt)
+                .isNotNull();
+
+        assertThat(categoryRepository.findById(categoryId2))
+                .isPresent()
+                .get()
+                .extracting(Category::getDeletedAt)
+                .isNotNull();
+
+        assertThat(categoryRepository.findById(categoryId3))
+                .isPresent()
+                .get()
+                .extracting(Category::getDeletedAt)
+                .isNotNull();
     }
 
-    // 다중 복구
     @Test
     @DisplayName("다중 카테고리 복구")
     void restoreMultipleCategories() throws Exception {
-
+        // Given
         List<Category> categories = categoryRepository.findByContainingName("분류3");
         Long categoryId1 = categories.get(0).getId();
         categories = categoryRepository.findByContainingName("분류5");
@@ -145,20 +192,48 @@ public class DeleteCategoryTests {
         categories = categoryRepository.findByContainingName("분류9");
         Long categoryId3 = categories.get(0).getId();
 
-        mockMvc.perform(put("/admin/restorecategory")
+        List<CategoryDeleteRequest> restoreRequests = List.of(
+                new CategoryDeleteRequest(categoryId1),
+                new CategoryDeleteRequest(categoryId2),
+                new CategoryDeleteRequest(categoryId3)
+        );
+
+        // When
+        String responseContent = mockMvc.perform(put("/admin/restorecategory")
                         .header("Authorization", "Bearer " + adminToken)
                         .contentType("application/json")
-                        .content(objectMapper.writeValueAsString(List.of(
-                                new CategoryDeleteRequest(categoryId1),
-                                new CategoryDeleteRequest(categoryId2),
-                                new CategoryDeleteRequest(categoryId3)
-                        ))))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true));
+                        .content(objectMapper.writeValueAsString(restoreRequests)))
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
 
-        assert categoryRepository.findById(categoryId1).get().getDeletedAt() == null;
-        assert categoryRepository.findById(categoryId2).get().getDeletedAt() == null;
-        assert categoryRepository.findById(categoryId3).get().getDeletedAt() == null;
+        // Then
+        ApiResponse<Void> apiResponse = objectMapper.readValue(responseContent, new TypeReference<>() {
+        });
+
+        assertThat(apiResponse.isSuccess()).isTrue();
+        assertThat(apiResponse.getError()).isNull();
+        assertThat(apiResponse.getMessage()).isNull();
+
+        assertThat(categoryRepository.findById(categoryId1))
+                .isPresent()
+                .get()
+                .extracting(Category::getDeletedAt)
+                .isNull();
+
+        assertThat(categoryRepository.findById(categoryId2))
+                .isPresent()
+                .get()
+                .extracting(Category::getDeletedAt)
+                .isNull();
+
+        assertThat(categoryRepository.findById(categoryId3))
+                .isPresent()
+                .get()
+                .extracting(Category::getDeletedAt)
+                .isNull();
+
+
     }
 
     /*

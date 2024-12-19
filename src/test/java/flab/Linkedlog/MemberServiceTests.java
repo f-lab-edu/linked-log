@@ -1,8 +1,8 @@
 package flab.Linkedlog;
 
 import flab.Linkedlog.config.JwtProperties;
-import flab.Linkedlog.dto.member.LogInDto;
-import flab.Linkedlog.dto.member.SignUpDto;
+import flab.Linkedlog.dto.member.LogInRequest;
+import flab.Linkedlog.dto.member.SignUpRequest;
 import flab.Linkedlog.entity.Member;
 import flab.Linkedlog.entity.enums.MemberGrade;
 import flab.Linkedlog.repository.MemberRepository;
@@ -48,7 +48,7 @@ class MemberServiceTest {
     @DisplayName("회원가입 테스트")
     void signUpTest() {
         // Given
-        SignUpDto signUpDto = new SignUpDto("userIdEx", "passwordRaw",
+        SignUpRequest signUpDto = new SignUpRequest("userIdEx", "passwordRaw",
                 "nicknameEx", "email", "email.com",
                 "010", "1111", "2222");
         Member member = Member.builder()
@@ -71,7 +71,7 @@ class MemberServiceTest {
     @Test
     void signUpExistTest() {
         // Given
-        SignUpDto signUpDto = new SignUpDto("userIdEx", "passwordRaw",
+        SignUpRequest signUpDto = new SignUpRequest("userIdEx", "passwordRaw",
                 "nicknameEx", "email", "email.com",
                 "010", "1111", "2222");
         Member member = Member.builder()
@@ -92,7 +92,7 @@ class MemberServiceTest {
     @Test
     void loginTest() {
         // Given
-        LogInDto logInDto = new LogInDto("userIdEx", "passwordRaw");
+        LogInRequest logInRequest = new LogInRequest("userIdEx", "passwordRaw");
         Member member = Member.builder()
                 .userId("userIdEx")
                 .password("passwordEncoded")
@@ -108,7 +108,7 @@ class MemberServiceTest {
         when(passwordEncoder.matches("passwordRaw", "passwordEncoded")).thenReturn(true);
         when(jwtProperties.getExpirationTime()).thenReturn(86400000L); // 1일 (밀리초 단위)
 
-        String token = memberService.login(logInDto);
+        String token = memberService.login(logInRequest);
 
         // Then
         assertThat(token).isEqualTo("jwtTokenString");
@@ -117,19 +117,19 @@ class MemberServiceTest {
     @Test
     void userNotFoundTest() {
         // Given
-        LogInDto logInDto = new LogInDto("userIdEx", "passwordRaw");
+        LogInRequest logInRequest = new LogInRequest("userIdEx", "passwordRaw");
 
         //When
         when(memberRepository.findByUserId("userIdEx")).thenReturn(Optional.empty());
 
         //Then
-        assertThrows(RuntimeException.class, () -> memberService.login(logInDto));
+        assertThrows(RuntimeException.class, () -> memberService.login(logInRequest));
     }
 
     @Test
     void invalidPasswordTest() {
         // Given
-        LogInDto logInDto = new LogInDto("userIdEx", "passwordRaw");
+        LogInRequest logInRequest = new LogInRequest("userIdEx", "passwordRaw");
         Member member = Member.builder()
                 .userId("userIdEx")
                 .password("passwordEncoded")
@@ -143,6 +143,6 @@ class MemberServiceTest {
         when(passwordEncoder.matches("passwordRaw", "passwordEncoded")).thenReturn(false);
 
         //Then
-        assertThrows(RuntimeException.class, () -> memberService.login(logInDto));
+        assertThrows(RuntimeException.class, () -> memberService.login(logInRequest));
     }
 }

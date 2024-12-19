@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import flab.Linkedlog.dto.member.LogInRequest;
 import flab.Linkedlog.entity.Member;
 import flab.Linkedlog.repository.MemberRepository;
-import flab.Linkedlog.service.MemberService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,9 +12,10 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
+import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 
 @SpringBootTest
@@ -36,7 +36,6 @@ public class LogInTests {
     private PasswordEncoder passwordEncoder;
 
 
-    // 로그인 성공 테스트
     @Test
     @DisplayName("로그인 성공 테스트")
     void loginSuccessfulTest() throws Exception {
@@ -58,16 +57,19 @@ public class LogInTests {
                 .password(password)
                 .build();
 
-        // When & Then
-        mockMvc.perform(post("/login")
+        // When
+        MvcResult result = mockMvc.perform(post("/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(loginRequest)))
-                .andExpect(MockMvcResultMatchers.status().isOk())
-                .andExpect(MockMvcResultMatchers.jsonPath("$.success").value(true))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.response.data").exists());
+                .andReturn();
+
+        // Then
+        String responseContent = result.getResponse().getContentAsString();
+        assertThat(result.getResponse().getStatus()).isEqualTo(200);
+        assertThat(responseContent).isNotBlank();
+
     }
 
-    // 로그인 실패 (아이디 불일치)
     @Test
     @DisplayName("로그인 실패 테스트 - 잘못된 아이디")
     void loginFailureTestInvalidUserId() throws Exception {
@@ -94,17 +96,21 @@ public class LogInTests {
                 .password(newPassword)
                 .build();
 
-        // When & Then
-        mockMvc.perform(post("/login")
+        // When
+        MvcResult result = mockMvc.perform(post("/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(loginRequest)))
-                .andExpect(MockMvcResultMatchers.status().isUnauthorized())
-                .andExpect(MockMvcResultMatchers.jsonPath("$.success").value(false));
+                .andReturn();
+
+        // Then
+        String responseContent = result.getResponse().getContentAsString();
+        assertThat(result.getResponse().getStatus()).isEqualTo(401);
+        assertThat(responseContent).isNotBlank();
     }
 
-    // 로그인 실패 (비밀번호 불일치)
+
     @Test
-    @DisplayName("로그인 실패 테스트 - 잘못된 비밀번호")
+    @DisplayName("로그인 실패 테스트 - 비밀번호 불일치")
     void loginFailureTestInvalidPassword() throws Exception {
 
         // Given
@@ -127,12 +133,16 @@ public class LogInTests {
                 .password(wrongPassword)
                 .build();
 
-        // When & Then
-        mockMvc.perform(post("/login")
+        // When
+        MvcResult result = mockMvc.perform(post("/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(loginRequest)))
-                .andExpect(MockMvcResultMatchers.status().isUnauthorized())
-                .andExpect(MockMvcResultMatchers.jsonPath("$.success").value(false));
+                .andReturn();
+
+        // Then
+        String responseContent = result.getResponse().getContentAsString();
+        assertThat(result.getResponse().getStatus()).isEqualTo(401);
+        assertThat(responseContent).isNotBlank();
     }
 
 

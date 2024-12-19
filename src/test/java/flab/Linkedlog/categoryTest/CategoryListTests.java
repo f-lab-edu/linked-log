@@ -1,6 +1,9 @@
 package flab.Linkedlog.categoryTest;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import flab.Linkedlog.controller.response.ApiResponse;
+import flab.Linkedlog.dto.category.CategoryListResponse;
 import flab.Linkedlog.entity.Category;
 import flab.Linkedlog.entity.enums.MemberGrade;
 import flab.Linkedlog.repository.CategoryRepository;
@@ -16,7 +19,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
 
@@ -68,18 +71,28 @@ public class CategoryListTests {
         // Given
         String adminToken = jwtUtil.generateToken("adminUser", MemberGrade.ADMIN);
 
-        // When & Then
-        mockMvc.perform(get("/admin/categoryList?status=active")
+        // When
+        String responseContent = mockMvc.perform(get("/admin/categoryList?status=ACTIVE")
                         .header("Authorization", "Bearer " + adminToken))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.response.data.size()").value(3))
-                .andExpect(jsonPath("$.response.data[0].categoryName").value("분류1"))
-                .andExpect(jsonPath("$.response.data[1].categoryName").value("분류2"))
-                .andExpect(jsonPath("$.response.data[2].categoryName").value("분류4"))
-                .andExpect(jsonPath("$.response.data[0].createdAt").exists())
-                .andExpect(jsonPath("$.response.data[1].createdAt").exists())
-                .andExpect(jsonPath("$.response.data[2].createdAt").exists());
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        System.out.println("Response Content: " + responseContent);
+        
+        ApiResponse<List<CategoryListResponse>> response = objectMapper.readValue(responseContent,
+                new TypeReference<ApiResponse<List<CategoryListResponse>>>() {
+                });
+
+        // Then
+        assertThat(response.isSuccess()).isTrue();
+        assertThat(response.getResponse()).hasSize(3);
+        assertThat(response.getResponse().get(0).getCategoryName()).isEqualTo("분류1");
+        assertThat(response.getResponse().get(1).getCategoryName()).isEqualTo("분류2");
+        assertThat(response.getResponse().get(2).getCategoryName()).isEqualTo("분류4");
+        assertThat(response.getResponse().get(0).getCreatedAt()).isNotNull();
+        assertThat(response.getResponse().get(1).getCreatedAt()).isNotNull();
+        assertThat(response.getResponse().get(2).getCreatedAt()).isNotNull();
     }
 
     @Test
@@ -88,18 +101,26 @@ public class CategoryListTests {
         // Given
         String adminToken = jwtUtil.generateToken("adminUser", MemberGrade.ADMIN);
 
-        // When & Then
-        mockMvc.perform(get("/admin/categoryList?status=deleted")
+        // When
+        String responseContent = mockMvc.perform(get("/admin/categoryList?status=DELETED")
                         .header("Authorization", "Bearer " + adminToken))
-                .andExpect(status().isOk()) // Then: 200 OK
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.response.data.size()").value(3))
-                .andExpect(jsonPath("$.response.data[0].categoryName").value("분류3"))
-                .andExpect(jsonPath("$.response.data[1].categoryName").value("분류5"))
-                .andExpect(jsonPath("$.response.data[2].categoryName").value("분류6"))
-                .andExpect(jsonPath("$.response.data[0].createdAt").exists())
-                .andExpect(jsonPath("$.response.data[1].createdAt").exists())
-                .andExpect(jsonPath("$.response.data[2].createdAt").exists());
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        ApiResponse<List<CategoryListResponse>> response = objectMapper.readValue(responseContent,
+                new TypeReference<ApiResponse<List<CategoryListResponse>>>() {
+                });
+
+        // Then
+        assertThat(response.isSuccess()).isTrue();
+        assertThat(response.getResponse()).hasSize(3);
+        assertThat(response.getResponse().get(0).getCategoryName()).isEqualTo("분류3");
+        assertThat(response.getResponse().get(1).getCategoryName()).isEqualTo("분류5");
+        assertThat(response.getResponse().get(2).getCategoryName()).isEqualTo("분류6");
+        assertThat(response.getResponse().get(0).getCreatedAt()).isNotNull();
+        assertThat(response.getResponse().get(1).getCreatedAt()).isNotNull();
+        assertThat(response.getResponse().get(2).getCreatedAt()).isNotNull();
     }
 
     @Test
@@ -108,11 +129,17 @@ public class CategoryListTests {
         // Given
         String adminToken = jwtUtil.generateToken("adminUser", MemberGrade.ADMIN);
 
-        // When & Then
-        mockMvc.perform(get("/admin/categoryList?status=invalid")
+        // When
+        String responseContent = mockMvc.perform(get("/admin/categoryList?status=invalid")
                         .header("Authorization", "Bearer " + adminToken))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.success").value(false));
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
 
+        ApiResponse<?> response = objectMapper.readValue(responseContent, ApiResponse.class);
+
+        // Then
+        assertThat(response.isSuccess()).isFalse();
+        assertThat(response.getError()).isEqualTo("INVALID_STATUS");
     }
 }

@@ -65,13 +65,9 @@ public class CategoryService {
         Category category = categoryRepository.findById(categoryDeleteRequest.getId())
                 .orElseThrow(() -> new EntityNotFoundException("Category not found"));
 
-        // 이미 삭제된 카테고리인지 확인
         if (category.getDeletedAt() != null) {
             throw new IllegalStateException("이미 삭제된 카테고리입니다: " + category.getId());
         }
-
-        categoryRepository.eraseCategory(category);
-        categoryRepository.save(category);
     }
 
 
@@ -80,13 +76,9 @@ public class CategoryService {
         Category category = categoryRepository.findById(categoryDeleteRequest.getId())
                 .orElseThrow(() -> new EntityNotFoundException("Category not found"));
 
-        // 삭제되지 않은 카테고리인지 확인
         if (category.getDeletedAt() == null) {
             throw new IllegalStateException("삭제되지 않은 카테고리입니다: " + category.getId());
         }
-
-        categoryRepository.restoreCategory(category);
-        categoryRepository.save(category);
     }
 
     // 다중 삭제
