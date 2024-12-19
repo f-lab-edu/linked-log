@@ -8,6 +8,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
@@ -44,7 +45,7 @@ public class Member extends BaseEntity {
     private MemberStatus memberStatus = MemberStatus.NORMAL;
 
     @Column(nullable = false)
-    private int cashPoint = 0;
+    private BigDecimal cashPoint = BigDecimal.valueOf(0);
 
     private LocalDateTime deletedAt;
 
@@ -60,6 +61,6 @@ public class Member extends BaseEntity {
         this.phone = phone;
         this.memberGrade = memberGrade != null ? memberGrade : MemberGrade.GENERAL;
         this.memberStatus = memberStatus != null ? memberStatus : MemberStatus.NORMAL;
-        this.cashPoint = cashPoint != 0 ? cashPoint : 0;
+        this.cashPoint = BigDecimal.valueOf(cashPoint != 0 ? cashPoint : 0);
     }
 }

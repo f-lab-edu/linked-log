@@ -1,10 +1,12 @@
 package flab.Linkedlog.controller;
 
-import flab.Linkedlog.dto.member.LogInDto;
-import flab.Linkedlog.dto.member.SignUpDto;
+import flab.Linkedlog.controller.response.ApiResponse;
+import flab.Linkedlog.dto.member.LogInRequest;
+import flab.Linkedlog.dto.member.SignUpRequest;
 import flab.Linkedlog.service.MemberService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -18,19 +20,19 @@ public class MemberController {
     private final MemberService memberService;
 
     @PostMapping(value = "/signup")
-    public ResponseEntity<Boolean> createMember(@RequestBody @Validated SignUpDto signUpDto) {
-        memberService.signUp(signUpDto);
-        return ResponseEntity.ok(true);
-    }
+    public ApiResponse<String> createMember(@RequestBody @Validated SignUpRequest signUpRequest) {
+        memberService.signUp(signUpRequest);
 
+        return ApiResponse.success(signUpRequest.getUserId());
+
+    }
 
     @PostMapping(value = "/login")
-    public ResponseEntity<String> login(@RequestBody @Validated LogInDto loginDto) {
+    public ApiResponse<String> login(@RequestBody @Validated LogInRequest loginRequest) {
+        String token = memberService.login(loginRequest);
 
-        String token = memberService.login(loginDto);
-        return ResponseEntity.ok(token);
+        return ApiResponse.success(token);
 
     }
-
 
 }
