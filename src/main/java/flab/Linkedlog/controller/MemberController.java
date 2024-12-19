@@ -18,7 +18,6 @@ import org.springframework.web.bind.annotation.RestController;
 public class MemberController {
 
     private final MemberService memberService;
-    private static final Logger logger = LoggerFactory.getLogger(MemberController.class);
 
     @PostMapping(value = "/signup")
     public ApiResponse<String> createMember(@RequestBody @Validated SignUpRequest signUpRequest) {

@@ -79,9 +79,9 @@ public class CategoryListTests {
                 .getContentAsString();
 
         System.out.println("Response Content: " + responseContent);
-        
+
         ApiResponse<List<CategoryListResponse>> response = objectMapper.readValue(responseContent,
-                new TypeReference<ApiResponse<List<CategoryListResponse>>>() {
+                new TypeReference<>() {
                 });
 
         // Then
@@ -109,7 +109,7 @@ public class CategoryListTests {
                 .getContentAsString();
 
         ApiResponse<List<CategoryListResponse>> response = objectMapper.readValue(responseContent,
-                new TypeReference<ApiResponse<List<CategoryListResponse>>>() {
+                new TypeReference<>() {
                 });
 
         // Then

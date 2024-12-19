@@ -1,19 +1,16 @@
 package flab.Linkedlog.entity.enums;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+
+@Getter
+@AllArgsConstructor
 public enum CategoryStates {
     ACTIVE("active"),
     DELETED("deleted");
 
-    private String state;
-
-    CategoryStates(String state) {
-        this.state = state;
-    }
-
-    public String getState() {
-        return state;
-    }
-
+    private final String state;
+    
     public static CategoryStates fromState(String state) {
         for (CategoryStates cs : CategoryStates.values()) {
             if (cs.getState().equals(state)) {
