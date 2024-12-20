@@ -35,7 +35,7 @@ public class JwtUtil {
         TimeZone.setDefault(TimeZone.getTimeZone("Asia/Seoul"));
     }
 
-    public String generateToken(String username, MemberGrade roles) {
+    public String generateToken(String username, MemberGrade roles, Long memberId) {
 
         ZonedDateTime now = ZonedDateTime.now(ZoneId.of("Asia/Seoul"));
         Duration expirationDuration = Duration.ofMillis(jwtProperties.getExpirationTime());

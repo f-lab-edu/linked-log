@@ -45,7 +45,7 @@ public class DeleteCategoryTests {
     @BeforeEach
     void setUp() {
 
-        adminToken = jwtUtil.generateToken("adminUser", MemberGrade.ADMIN);
+        adminToken = jwtUtil.generateToken("adminUser", MemberGrade.ADMIN, 1L);
 
         String[] categoryNames = {"분류1", "분류2", "분류3", "분류4", "분류5", "분류6", "분류7", "분류8", "분류9", "분류10"};
         String[] deletedCategoryNames = {"분류1", "분류3", "분류5", "분류7", "분류9"};  // 삭제할 카테고리 이름 배열

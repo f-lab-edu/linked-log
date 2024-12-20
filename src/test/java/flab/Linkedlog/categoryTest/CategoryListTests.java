@@ -69,7 +69,7 @@ public class CategoryListTests {
     @DisplayName("카테고리 목록 조회 (active)")
     void getCategoriesWithActiveStatus() throws Exception {
         // Given
-        String adminToken = jwtUtil.generateToken("adminUser", MemberGrade.ADMIN);
+        String adminToken = jwtUtil.generateToken("adminUser", MemberGrade.ADMIN, 1L);
 
         // When
         String responseContent = mockMvc.perform(get("/admin/categoryList?status=ACTIVE")
@@ -99,7 +99,7 @@ public class CategoryListTests {
     @DisplayName("카테고리 목록 조회 (deleted)")
     void getCategoriesWithDeletedStatus() throws Exception {
         // Given
-        String adminToken = jwtUtil.generateToken("adminUser", MemberGrade.ADMIN);
+        String adminToken = jwtUtil.generateToken("adminUser", MemberGrade.ADMIN, 1L);
 
         // When
         String responseContent = mockMvc.perform(get("/admin/categoryList?status=DELETED")
@@ -127,7 +127,7 @@ public class CategoryListTests {
     @DisplayName("유효하지 않은 status")
     void getCategoriesWithInvalidStatus() throws Exception {
         // Given
-        String adminToken = jwtUtil.generateToken("adminUser", MemberGrade.ADMIN);
+        String adminToken = jwtUtil.generateToken("adminUser", MemberGrade.ADMIN, 1L);
 
         // When
         String responseContent = mockMvc.perform(get("/admin/categoryList?status=invalid")

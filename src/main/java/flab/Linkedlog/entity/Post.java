@@ -1,11 +1,14 @@
 package flab.Linkedlog.entity;
 
+import flab.Linkedlog.entity.enums.MemberGrade;
+import flab.Linkedlog.entity.enums.MemberStatus;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
@@ -36,16 +39,23 @@ public class Post extends BaseEntity {
     private int views;
 
     @Column(nullable = false)
-    private int price;
+    private BigDecimal price = BigDecimal.valueOf(0);
 
     private LocalDateTime deletedAt;
 
-    @PrePersist
-    public void prePersist() {
-        this.price = 0;
-        this.deletedAt = null;
-        this.views = 0;
-    }
-    
 
+    @Builder
+    public Post(Category category, Member member, String title,
+                String content, int views, BigDecimal price) {
+        this.category = category;
+        this.member = member;
+        this.title = title;
+        this.content = content;
+        this.views = views;
+        this.price = price != null ? price : BigDecimal.ZERO;
+    }
+
+    public void incrementViews() {
+        this.views++;
+    }
 }

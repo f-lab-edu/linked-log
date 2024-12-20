@@ -53,7 +53,7 @@ public class Member extends BaseEntity {
     @Builder
     public Member(String userId, String password, String nickName,
                   String email, String phone, MemberGrade memberGrade,
-                  MemberStatus memberStatus, int cashPoint) {
+                  MemberStatus memberStatus, BigDecimal cashPoint) {
         this.userId = userId;
         this.password = password;
         this.nickName = nickName;
@@ -61,6 +61,6 @@ public class Member extends BaseEntity {
         this.phone = phone;
         this.memberGrade = memberGrade != null ? memberGrade : MemberGrade.GENERAL;
         this.memberStatus = memberStatus != null ? memberStatus : MemberStatus.NORMAL;
-        this.cashPoint = BigDecimal.valueOf(cashPoint != 0 ? cashPoint : 0);
+        this.cashPoint = cashPoint != null ? cashPoint : BigDecimal.ZERO;
     }
 }

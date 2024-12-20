@@ -6,7 +6,6 @@ import flab.Linkedlog.dto.post.PostListDto;
 import flab.Linkedlog.entity.Post;
 import flab.Linkedlog.repository.CategoryRepository;
 import flab.Linkedlog.repository.MemberRepository;
-import flab.Linkedlog.repository.PostRepository;
 import jakarta.persistence.EntityNotFoundException;
 
 import lombok.RequiredArgsConstructor;
@@ -24,12 +23,18 @@ public class PostService {
 
     private final CategoryRepository categoryRepository;
     private final MemberRepository memberRepository;
-    private final PostRepository postRepository;
+    private final flab.Linkedlog.repository.post.PostRepository postRepository;
 
 
     // 글 등록
     public Long createPost(CreatePostDto postDto, Long categoryId, Long memberId) {
 
+        if (postDto.getTitle() == null || postDto.getTitle().isBlank()) {
+            throw new IllegalArgumentException("Title must not be empty");
+        }
+        if (postDto.getContent() == null || postDto.getContent().isBlank()) {
+            throw new IllegalArgumentException("Content must not be empty");
+        }
 
         Post post = Post.builder()
                 .member(memberRepository.findById(memberId).orElseThrow(EntityNotFoundException::new))
@@ -81,10 +86,17 @@ public class PostService {
                 .collect(Collectors.toList());
     }
 
-    @Transactional(readOnly = true)
-    public Optional<PostDetailDto> getPostDetailById(Long postId) {
+    @Transactional
+    public Optional<PostDetailDto> getPostDetailById(Long categoryId, Long postId) {
+
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new EntityNotFoundException("Post not found"));
+
+        if (!post.getCategory().getId().equals(categoryId)) {
+            throw new IllegalArgumentException("The post does not exist in the category");
+        }
+
+        postRepository.incrementViewCount(postId);
 
         return Optional.of(new PostDetailDto(
                 post.getId(),

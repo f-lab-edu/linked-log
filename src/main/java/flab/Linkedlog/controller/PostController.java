@@ -1,10 +1,13 @@
 package flab.Linkedlog.controller;
 
 import flab.Linkedlog.config.CustomUserDetails;
+import flab.Linkedlog.controller.response.ApiResponse;
 import flab.Linkedlog.dto.post.CreatePostDto;
 import flab.Linkedlog.dto.post.PostDetailDto;
 import flab.Linkedlog.dto.post.PostListDto;
 import flab.Linkedlog.service.PostService;
+import jakarta.persistence.EntityNotFoundException;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -24,43 +27,46 @@ public class PostController {
     // 글 등록
     @PostMapping("/category/{categoryId}/write")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<Long> createPost(@RequestBody CreatePostDto createPostDto,
-                                           @PathVariable Long categoryId) {
-        CustomUserDetails userDetails = (CustomUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-
+    public ApiResponse<Long> createPost(@Valid @RequestBody CreatePostDto createPostDto,
+                                        @PathVariable Long categoryId) {
+        CustomUserDetails userDetails = (CustomUserDetails) SecurityContextHolder.
+                getContext().
+                getAuthentication().
+                getPrincipal();
         Long memberId = userDetails.getMemberId();
 
         Long postId = postService.createPost(createPostDto, categoryId, memberId);
-        return ResponseEntity.ok(postId);
+        return ApiResponse.success(postId);
     }
 
     // 글 조회 1: 특정 카테고리의 글 조회
     @GetMapping("/category/{categoryId}")
     @PreAuthorize("permitAll()")
-    public ResponseEntity<List<PostListDto>> getPostsByCategory(@PathVariable Long categoryId) {
+    public ApiResponse<List<PostListDto>> getPostsByCategory(@PathVariable Long categoryId) {
         List<PostListDto> posts = postService.getPostsByCategory(categoryId);
 
-        return ResponseEntity.ok(posts);
+        return ApiResponse.success(posts);
     }
 
     // 글 조회 2: 특정 카테고리에서 키워드로 검색
     @GetMapping("/category/{categoryId}/search")
     @PreAuthorize("permitAll()")
-    public ResponseEntity<List<PostListDto>> searchPostsByCategoryAndKeyword(
+    public ApiResponse<List<PostListDto>> searchPostsByCategoryAndKeyword(
             @PathVariable Long categoryId,
             @RequestParam String keyword) {
         List<PostListDto> posts = postService.searchPostsByCategoryAndKeyword(categoryId, keyword);
-        return ResponseEntity.ok(posts);
+        return ApiResponse.success(posts);
     }
 
     // 글 상세 : 글 1개 조회
     @GetMapping("/category/{categoryId}/detail/{postId}")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<Optional<PostDetailDto>> getPostDetail(
+    public ApiResponse<PostDetailDto> getPostDetail(
             @PathVariable Long categoryId,
             @PathVariable Long postId) {
-        Optional<PostDetailDto> post = postService.getPostDetailById(postId);
-        return ResponseEntity.ok(post);
+        PostDetailDto post = postService.getPostDetailById(categoryId, postId)
+                .orElse(null);
+        return ApiResponse.success(post);
     }
 
 

@@ -44,7 +44,7 @@ public class AddCategoryTests {
     void addCategoryWithAdminRoleTest() throws Exception {
 
         // Given
-        String adminToken = jwtUtil.generateToken("adminUser", MemberGrade.ADMIN);
+        String adminToken = jwtUtil.generateToken("adminUser", MemberGrade.ADMIN, 1L);
 
         CategoryCreateRequest request = CategoryCreateRequest.builder()
                 .categoryName("Admin Category")
@@ -78,7 +78,7 @@ public class AddCategoryTests {
     @DisplayName("General 계정으로 카테고리 추가 시 실패")
     void addCategoryWithGeneralRoleTest() throws Exception {
         // Given
-        String userToken = jwtUtil.generateToken("generalUser", MemberGrade.GENERAL);
+        String userToken = jwtUtil.generateToken("generalUser", MemberGrade.GENERAL, 2L);
         CategoryCreateRequest request = CategoryCreateRequest.builder()
                 .categoryName("User Category")
                 .build();
