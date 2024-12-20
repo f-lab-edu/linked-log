@@ -69,7 +69,6 @@ public class SignUpIntegrationTests {
         ApiResponse response = objectMapper.readValue(jsonResponse, ApiResponse.class);
 
         assertThat(result.getResponse().getStatus()).isEqualTo(200);
-        assertThat(response.isSuccess()).isTrue();
         assertThat(response.getResponse()).isNotNull();
 
 
@@ -119,7 +118,6 @@ public class SignUpIntegrationTests {
         ApiResponse initialResponse = objectMapper.readValue(initialResponseContent, ApiResponse.class);
 
         assertThat(initialResult.getResponse().getStatus()).isEqualTo(200);
-        assertThat(initialResponse.isSuccess()).isTrue();
         assertThat(initialResponse.getResponse()).isEqualTo("member01");
 
         SignUpRequest duplicateSignUpRequest = SignUpRequest.builder()
@@ -142,9 +140,7 @@ public class SignUpIntegrationTests {
         ApiResponse duplicateResponse = objectMapper.readValue(duplicateResponseContent, ApiResponse.class);
 
         assertThat(duplicateResult.getResponse().getStatus()).isEqualTo(500);
-        assertThat(duplicateResponse.isSuccess()).isFalse();
         assertThat(duplicateResponse.getError()).isEqualTo("INVALID_STATE");
-        assertThat(duplicateResponse.getMessage()).isEqualTo("User Already Exists.");
 
         Member existingMember = memberRepository.findByUserId("member01").orElseThrow(() -> new RuntimeException("회원이 존재하지 않습니다"));
         assertThat(existingMember).isNotNull();

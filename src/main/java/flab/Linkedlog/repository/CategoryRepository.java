@@ -29,7 +29,7 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
     @Query("select c from Category c where c.deletedAt is not null")
     List<Category> findAllDeleted();
 
-    
+
     // 일괄 삭제(최적화)
     @Modifying(clearAutomatically = true)
     @Query("UPDATE Category c SET c.deletedAt = CURRENT_TIMESTAMP WHERE c.id IN :ids")
@@ -40,5 +40,10 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
     @Query("UPDATE Category c SET c.deletedAt = null WHERE c.id IN :ids")
     void batchRestoreCategory(@Param("ids") List<Long> ids);
 
+    @Query("SELECT c FROM Category c WHERE c.id IN :ids AND c.deletedAt IS NOT NULL")
+    List<Category> findDeletedCategoriesByIds(@Param("ids") List<Long> ids);
+
+    @Query("SELECT c FROM Category c WHERE c.id IN :ids AND c.deletedAt IS NULL")
+    List<Category> findExistingCategoriesByIds(@Param("ids") List<Long> ids);
 
 }

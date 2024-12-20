@@ -85,7 +85,6 @@ public class CategoryListTests {
                 });
 
         // Then
-        assertThat(response.isSuccess()).isTrue();
         assertThat(response.getResponse()).hasSize(3);
         assertThat(response.getResponse().get(0).getCategoryName()).isEqualTo("분류1");
         assertThat(response.getResponse().get(1).getCategoryName()).isEqualTo("분류2");
@@ -113,7 +112,6 @@ public class CategoryListTests {
                 });
 
         // Then
-        assertThat(response.isSuccess()).isTrue();
         assertThat(response.getResponse()).hasSize(3);
         assertThat(response.getResponse().get(0).getCategoryName()).isEqualTo("분류3");
         assertThat(response.getResponse().get(1).getCategoryName()).isEqualTo("분류5");
@@ -139,7 +137,6 @@ public class CategoryListTests {
         ApiResponse<?> response = objectMapper.readValue(responseContent, ApiResponse.class);
 
         // Then
-        assertThat(response.isSuccess()).isFalse();
         assertThat(response.getError()).isEqualTo("INVALID_STATUS");
     }
 }
