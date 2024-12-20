@@ -1,7 +1,5 @@
 package flab.Linkedlog.entity;
 
-import flab.Linkedlog.entity.enums.MemberGrade;
-import flab.Linkedlog.entity.enums.MemberStatus;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;

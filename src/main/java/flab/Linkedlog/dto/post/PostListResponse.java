@@ -14,7 +14,7 @@ import java.time.LocalDateTime;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class PostListDto {
+public class PostListResponse {
 
     @NotNull(message = "글 아이디")
     private Long id;

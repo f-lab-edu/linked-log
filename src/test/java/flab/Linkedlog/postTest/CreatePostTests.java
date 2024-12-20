@@ -2,7 +2,7 @@ package flab.Linkedlog.postTest;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import flab.Linkedlog.controller.response.ApiResponse;
-import flab.Linkedlog.dto.post.CreatePostDto;
+import flab.Linkedlog.dto.post.CreatePostRequest;
 import flab.Linkedlog.entity.Category;
 import flab.Linkedlog.entity.Member;
 import flab.Linkedlog.entity.Post;
@@ -56,7 +56,6 @@ public class CreatePostTests {
 
     @BeforeEach
     void setUp() {
-        // 테스트에서 사용할 멤버 생성
         Member testMember = Member.builder()
                 .userId("testUser")
                 .password("testPassword")
@@ -65,10 +64,9 @@ public class CreatePostTests {
                 .phone("010-0000-0000")
                 .memberGrade(MemberGrade.GENERAL)
                 .build();
-        testMember = memberRepository.save(testMember); // 저장 후 ID를 가져옴
-        testMemberId = testMember.getId(); // 자동 생성된 ID를 저장
+        testMember = memberRepository.save(testMember);
+        testMemberId = testMember.getId();
 
-        // 테스트에서 사용할 카테고리 생성
         Category testCategory = Category.builder()
                 .name("Test Category")
                 .build();
@@ -86,25 +84,24 @@ public class CreatePostTests {
     @Test
     @DisplayName("글 등록 성공 테스트")
     void createPostSuccessTest() throws Exception {
-        // Given: 필요한 데이터 준비
+        // Given
         Category category = categoryRepository.findAll().get(0);
         Long categoryId = category.getId();
 
-        CreatePostDto createPostDto = new CreatePostDto();
-        createPostDto.setTitle("Test Post Title");
-        createPostDto.setContent("This is a test post content.");
+        CreatePostRequest createPostRequest = new CreatePostRequest();
+        createPostRequest.setTitle("Test Post Title");
+        createPostRequest.setContent("This is a test post content.");
 
-        // JWT 토큰 생성
         String token = jwtUtil.generateToken("testUser", MemberGrade.GENERAL, testMemberId);
 
-        // When: API 요청 실행
+        // When
         MvcResult result = mockMvc.perform(post("/posts/category/{categoryId}/write", categoryId)
                         .header("Authorization", "Bearer " + token)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(createPostDto)))
+                        .content(objectMapper.writeValueAsString(createPostRequest)))
                 .andReturn();
 
-        // Then: 응답 검증
+        // Then
         String jsonResponse = result.getResponse().getContentAsString();
         ApiResponse response = objectMapper.readValue(jsonResponse, ApiResponse.class);
 
@@ -112,7 +109,6 @@ public class CreatePostTests {
         assertThat(response.isSuccess()).isTrue();
         assertThat(response.getResponse()).isNotNull();
 
-        // DB 검증
         List<Post> posts = postRepository.findAll();
         Optional<Post> savedPost = posts.stream()
                 .filter(post -> "Test Post Title".equals(post.getTitle()))
@@ -126,51 +122,49 @@ public class CreatePostTests {
     @Test
     @DisplayName("글 등록 실패 테스트 - 인증되지 않은 사용자")
     void createPostUnauthorizedTest() throws Exception {
-        // Given: 필요한 데이터 준비
+        // Given
         Category category = categoryRepository.save(new Category("Test Category"));
         Long categoryId = category.getId();
 
-        CreatePostDto createPostDto = new CreatePostDto();
-        createPostDto.setTitle("Test Post Title");
-        createPostDto.setContent("This is a test post content.");
+        CreatePostRequest createPostRequest = new CreatePostRequest();
+        createPostRequest.setTitle("Test Post Title");
+        createPostRequest.setContent("This is a test post content.");
 
-        // When: API 요청 실행 (토큰 없음)
+        // When
         MvcResult result = mockMvc.perform(post("/posts/category/{categoryId}/write", categoryId)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(createPostDto)))
+                        .content(objectMapper.writeValueAsString(createPostRequest)))
                 .andReturn();
 
-        // Then: 응답 검증
-        assertThat(result.getResponse().getStatus()).isEqualTo(401); // Unauthorized
+        // Then
+        assertThat(result.getResponse().getStatus()).isEqualTo(401);
     }
 
     @Test
     @DisplayName("글 등록 실패 테스트 - title이 비었을 때")
     void createPostTitleEmptyTest() throws Exception {
-        // Given: 필요한 데이터 준비
+        // Given
         Category category = categoryRepository.save(new Category("Test Category"));
         Long categoryId = category.getId();
 
-        // title이 비어있는 DTO 생성
-        CreatePostDto createPostDto = new CreatePostDto();
-        createPostDto.setTitle(""); // 비어 있는 title
-        createPostDto.setContent("This is a test post content.");
+        CreatePostRequest createPostRequest = new CreatePostRequest();
+        createPostRequest.setTitle("");
+        createPostRequest.setContent("This is a test post content.");
 
-        // JWT 토큰 생성
         String token = jwtUtil.generateToken("testUser", MemberGrade.GENERAL, testMemberId);
 
-        // When: API 요청 실행
+        // When
         MvcResult result = mockMvc.perform(post("/posts/category/{categoryId}/write", categoryId)
                         .header("Authorization", "Bearer " + token)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(createPostDto)))
+                        .content(objectMapper.writeValueAsString(createPostRequest)))
                 .andReturn();
 
-        // Then: 응답 검증
+        // Then
         String jsonResponse = result.getResponse().getContentAsString();
         ApiResponse response = objectMapper.readValue(jsonResponse, ApiResponse.class);
 
-        assertThat(result.getResponse().getStatus()).isEqualTo(400); // Bad Request
+        assertThat(result.getResponse().getStatus()).isEqualTo(400);
         assertThat(response.isSuccess()).isFalse();
         assertThat(response.getError()).contains("VALIDATION_FAILED");
     }
@@ -178,30 +172,28 @@ public class CreatePostTests {
     @Test
     @DisplayName("글 등록 실패 테스트 - content가 비었을 때")
     void createPostContentEmptyTest() throws Exception {
-        // Given: 필요한 데이터 준비
+        // Given
         Category category = categoryRepository.save(new Category("Test Category"));
         Long categoryId = category.getId();
 
-        // content가 비어있는 DTO 생성
-        CreatePostDto createPostDto = new CreatePostDto();
-        createPostDto.setTitle("Test Post Title");
-        createPostDto.setContent(""); // 비어 있는 content
+        CreatePostRequest createPostRequest = new CreatePostRequest();
+        createPostRequest.setTitle("Test Post Title");
+        createPostRequest.setContent(""); // 비어 있는 content
 
-        // JWT 토큰 생성
         String token = jwtUtil.generateToken("testUser", MemberGrade.GENERAL, testMemberId);
 
-        // When: API 요청 실행
+        // When
         MvcResult result = mockMvc.perform(post("/posts/category/{categoryId}/write", categoryId)
                         .header("Authorization", "Bearer " + token)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(createPostDto)))
+                        .content(objectMapper.writeValueAsString(createPostRequest)))
                 .andReturn();
 
-        // Then: 응답 검증
+        // Then
         String jsonResponse = result.getResponse().getContentAsString();
         ApiResponse response = objectMapper.readValue(jsonResponse, ApiResponse.class);
 
-        assertThat(result.getResponse().getStatus()).isEqualTo(400); // Bad Request
+        assertThat(result.getResponse().getStatus()).isEqualTo(400);
         assertThat(response.isSuccess()).isFalse();
         assertThat(response.getError()).contains("VALIDATION_FAILED");
     }

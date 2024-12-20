@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 @Data
 @Builder
 @AllArgsConstructor
-public class PostDetailDto {
+public class PostDetailResponse {
 
 
     @NotEmpty(message = "글 아이디")

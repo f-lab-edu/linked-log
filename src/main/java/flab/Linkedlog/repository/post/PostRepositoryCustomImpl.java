@@ -8,9 +8,6 @@ import flab.Linkedlog.entity.QMember;
 import flab.Linkedlog.entity.QPost;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityNotFoundException;
-import org.springframework.data.jpa.repository.Modifying;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -71,10 +68,7 @@ public class PostRepositoryCustomImpl implements PostRepositoryCustom {
             throw new EntityNotFoundException("Post not found");
         }
 
-        // 엔티티 내 메서드로 조회수 증가
         post.incrementViews();
-
-        // 조회수 증가 후, 변경된 Post 객체를 merge하여 영속성 컨텍스트에 반영
         entityManager.merge(post);
     }
 }
