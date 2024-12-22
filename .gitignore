@@ -54,5 +54,3 @@ jacoco.exec
 gradle/
 gradlew
 gradlew.bat
-build.gradle
-settings.gradle
