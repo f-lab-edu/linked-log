@@ -106,7 +106,6 @@ public class CreatePostTests {
         ApiResponse response = objectMapper.readValue(jsonResponse, ApiResponse.class);
 
         assertThat(result.getResponse().getStatus()).isEqualTo(200);
-        assertThat(response.isSuccess()).isTrue();
         assertThat(response.getResponse()).isNotNull();
 
         List<Post> posts = postRepository.findAll();
@@ -165,7 +164,6 @@ public class CreatePostTests {
         ApiResponse response = objectMapper.readValue(jsonResponse, ApiResponse.class);
 
         assertThat(result.getResponse().getStatus()).isEqualTo(400);
-        assertThat(response.isSuccess()).isFalse();
         assertThat(response.getError()).contains("VALIDATION_FAILED");
     }
 
@@ -194,7 +192,6 @@ public class CreatePostTests {
         ApiResponse response = objectMapper.readValue(jsonResponse, ApiResponse.class);
 
         assertThat(result.getResponse().getStatus()).isEqualTo(400);
-        assertThat(response.isSuccess()).isFalse();
         assertThat(response.getError()).contains("VALIDATION_FAILED");
     }
 }

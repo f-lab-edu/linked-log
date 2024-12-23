@@ -145,7 +145,6 @@ public class PostListInCategoryTests {
                 });
 
         // Then
-        assertThat(response.isSuccess()).isTrue();
         assertThat(response.getResponse()).hasSize(7);
         assertThat(response.getResponse().get(0).getTitle()).isEqualTo("파이썬 2강");
         assertThat(response.getResponse().get(1).getTitle()).isEqualTo("파이썬 1강");

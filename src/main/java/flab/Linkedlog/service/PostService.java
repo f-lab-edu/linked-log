@@ -72,6 +72,11 @@ public class PostService {
     // 글 조회 2: 특정 카테고리의 글 중 제목 또는 내용에 특정 문자열 포함된 글을 출력
     @Transactional(readOnly = true)
     public List<PostListResponse> searchPostsByCategoryAndKeyword(Long categoryId, String keyword) {
+
+        if (keyword == null || keyword.trim().isEmpty()) {
+            throw new IllegalArgumentException("keyword must not be empty");
+        }
+
         return postRepository.findPostListInCategoryContainKeyword(categoryId, keyword).stream()
                 .map(post -> new PostListResponse(
                         post.getId(),

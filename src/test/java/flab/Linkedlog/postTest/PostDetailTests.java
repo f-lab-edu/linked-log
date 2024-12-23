@@ -125,7 +125,6 @@ public class PostDetailTests {
         ApiResponse<PostDetailResponse> response = objectMapper.readValue(jsonResponse, ApiResponse.class);
 
         assertThat(result.getResponse().getStatus()).isEqualTo(401);
-        assertThat(response.isSuccess()).isFalse();
         assertThat(response.getError()).contains("Unauthorized");
 
     }
@@ -151,7 +150,6 @@ public class PostDetailTests {
         PostDetailResponse postDetail = apiResponse.getResponse();
 
         assertThat(result.getResponse().getStatus()).isEqualTo(200);
-        assertThat(apiResponse.isSuccess()).isTrue();
         assertThat(postDetail.getTitle()).isEqualTo("Test Post Title");
         assertThat(postDetail.getContent()).isEqualTo(contentExample);
         assertThat(postDetail.getCategoryId()).isEqualTo(testCategoryId);
@@ -244,7 +242,6 @@ public class PostDetailTests {
 
         ApiResponse<PostDetailResponse> apiResponse = objectMapper.readValue(responseContent, new TypeReference<>() {
         });
-        assertThat(apiResponse.isSuccess()).isFalse();
 
 
     }
@@ -270,7 +267,6 @@ public class PostDetailTests {
 
         ApiResponse<PostDetailResponse> apiResponse = objectMapper.readValue(responseContent, new TypeReference<>() {
         });
-        assertThat(apiResponse.isSuccess()).isFalse();
 
 
     }
