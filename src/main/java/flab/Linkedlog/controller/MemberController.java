@@ -1,11 +1,8 @@
 package flab.Linkedlog.controller;
 
-import flab.Linkedlog.config.CustomUserDetails;
-import flab.Linkedlog.dto.member.LogInDto;
-import flab.Linkedlog.dto.member.MyPageDto;
-import flab.Linkedlog.dto.member.SignUpDto;
-import flab.Linkedlog.dto.member.SignUpForm;
-import flab.Linkedlog.dto.post.PostDetailDto;
+import flab.Linkedlog.controller.response.ApiResponse;
+import flab.Linkedlog.dto.member.LogInRequest;
+import flab.Linkedlog.dto.member.SignUpRequest;
 import flab.Linkedlog.service.MemberService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -14,6 +11,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -47,14 +46,20 @@ public class MemberController {
             @ModelAttribute @Valid SignUpForm signUpForm) throws IOException {
         memberService.signUp(signUpForm.toDto(), signUpForm.getProfileImage());
         return ResponseEntity.ok("회원가입 성공");
+    @PostMapping(value = "/signup")
+    public ApiResponse<String> createMember(@RequestBody @Validated SignUpRequest signUpRequest) {
+        memberService.signUp(signUpRequest);
+
+        return ApiResponse.success(signUpRequest.getUserId());
+
     }
 
 
     @PostMapping(value = "/login")
-    public ResponseEntity<String> login(@RequestBody @Validated LogInDto loginDto) {
+    public ApiResponse<String> login(@RequestBody @Validated LogInRequest loginRequest) {
+        String token = memberService.login(loginRequest);
 
-        String token = memberService.login(loginDto);
-        return ResponseEntity.ok(token);
+        return ApiResponse.success(token);
 
     }
 

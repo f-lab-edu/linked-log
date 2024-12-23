@@ -7,13 +7,14 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class PostListDto {
+public class PostListResponse {
 
     @NotNull(message = "글 아이디")
     private Long id;
@@ -37,6 +38,6 @@ public class PostListDto {
     private int viewes;
 
     @Positive(message = "유료 금액은 0 이상의 값이어야 합니다")
-    private int price;
+    private BigDecimal price;
 
 }

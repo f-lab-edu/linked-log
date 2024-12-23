@@ -1,12 +1,11 @@
 package flab.Linkedlog.service;
 
-import flab.Linkedlog.dto.post.CreatePostDto;
-import flab.Linkedlog.dto.post.PostDetailDto;
-import flab.Linkedlog.dto.post.PostListDto;
+import flab.Linkedlog.dto.post.CreatePostRequest;
+import flab.Linkedlog.dto.post.PostDetailResponse;
+import flab.Linkedlog.dto.post.PostListResponse;
 import flab.Linkedlog.entity.Post;
 import flab.Linkedlog.repository.CategoryRepository;
 import flab.Linkedlog.repository.MemberRepository;
-import flab.Linkedlog.repository.PostRepository;
 import jakarta.persistence.EntityNotFoundException;
 
 import lombok.RequiredArgsConstructor;
@@ -24,12 +23,18 @@ public class PostService {
 
     private final CategoryRepository categoryRepository;
     private final MemberRepository memberRepository;
-    private final PostRepository postRepository;
+    private final flab.Linkedlog.repository.post.PostRepository postRepository;
 
 
     // 글 등록
-    public Long createPost(CreatePostDto postDto, Long categoryId, Long memberId) {
+    public Long createPost(CreatePostRequest postDto, Long categoryId, Long memberId) {
 
+        if (postDto.getTitle() == null || postDto.getTitle().isBlank()) {
+            throw new IllegalArgumentException("Title must not be empty");
+        }
+        if (postDto.getContent() == null || postDto.getContent().isBlank()) {
+            throw new IllegalArgumentException("Content must not be empty");
+        }
 
         Post post = Post.builder()
                 .member(memberRepository.findById(memberId).orElseThrow(EntityNotFoundException::new))
@@ -44,12 +49,12 @@ public class PostService {
 
     // 글 조회 1: 특정 카테고리의 글들을 날짜 내림차순으로 출력
     @Transactional(readOnly = true)
-    public List<PostListDto> getPostsByCategory(Long categoryId) {
+    public List<PostListResponse> getPostsByCategory(Long categoryId) {
         return postRepository.findPostListInCategory(categoryId).stream()
                 .map(post -> {
 
                     // PostListDto 생성
-                    return new PostListDto(
+                    return new PostListResponse(
                             post.getId(),
                             post.getTitle(),
                             post.getContent(),
@@ -66,9 +71,14 @@ public class PostService {
 
     // 글 조회 2: 특정 카테고리의 글 중 제목 또는 내용에 특정 문자열 포함된 글을 출력
     @Transactional(readOnly = true)
-    public List<PostListDto> searchPostsByCategoryAndKeyword(Long categoryId, String keyword) {
+    public List<PostListResponse> searchPostsByCategoryAndKeyword(Long categoryId, String keyword) {
+
+        if (keyword == null || keyword.trim().isEmpty()) {
+            throw new IllegalArgumentException("keyword must not be empty");
+        }
+
         return postRepository.findPostListInCategoryContainKeyword(categoryId, keyword).stream()
-                .map(post -> new PostListDto(
+                .map(post -> new PostListResponse(
                         post.getId(),
                         post.getTitle(),
                         post.getContent(),
@@ -81,12 +91,19 @@ public class PostService {
                 .collect(Collectors.toList());
     }
 
-    @Transactional(readOnly = true)
-    public Optional<PostDetailDto> getPostDetailById(Long postId) {
+    @Transactional
+    public Optional<PostDetailResponse> getPostDetailById(Long categoryId, Long postId) {
+
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new EntityNotFoundException("Post not found"));
 
-        return Optional.of(new PostDetailDto(
+        if (!post.getCategory().getId().equals(categoryId)) {
+            throw new IllegalArgumentException("The post does not exist in the category");
+        }
+
+        postRepository.incrementViewCount(postId);
+
+        return Optional.of(new PostDetailResponse(
                 post.getId(),
                 post.getCategory().getId(),
                 post.getMember().getNickName(),

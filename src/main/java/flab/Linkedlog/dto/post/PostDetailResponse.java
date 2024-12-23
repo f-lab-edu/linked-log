@@ -5,13 +5,14 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 
 @Data
 @Builder
 @AllArgsConstructor
-public class PostDetailDto {
+public class PostDetailResponse {
 
 
     @NotEmpty(message = "글 아이디")
@@ -36,7 +37,7 @@ public class PostDetailDto {
     private int viewes;
 
     @NotEmpty(message = "유료 금액")
-    private int price;
+    private BigDecimal price;
 
 
 }
