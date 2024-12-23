@@ -87,6 +87,12 @@ public class CategoryService {
                 .map(CategoryDeleteRequest::getId)
                 .toList();
 
+        List<Category> alreadyDeletedCategories = categoryRepository.findDeletedCategoriesByIds(categoryIds);
+
+        if (!alreadyDeletedCategories.isEmpty()) {
+            throw new IllegalStateException("이미 삭제된 카테고리가 있습니다.");
+        }
+
         categoryRepository.batchDeleteCategory(categoryIds);
     }
 
@@ -95,6 +101,12 @@ public class CategoryService {
         List<Long> categoryIds = categoryDeleteRequests.stream()
                 .map(CategoryDeleteRequest::getId)
                 .toList();
+
+        List<Category> alreadyExistingCategories = categoryRepository.findExistingCategoriesByIds(categoryIds);
+
+        if (!alreadyExistingCategories.isEmpty()) {
+            throw new IllegalStateException("이미 존재하는 카테고리입니다.");
+        }
 
         categoryRepository.batchRestoreCategory(categoryIds);
     }

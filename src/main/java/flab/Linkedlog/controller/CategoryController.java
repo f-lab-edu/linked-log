@@ -52,7 +52,7 @@ public class CategoryController {
 
 
     @PutMapping(value = "/admin/restorecategory")
-    public ApiResponse<Void> modifyCategories(
+    public ApiResponse<Void> restoreCategories(
             @RequestBody List<CategoryDeleteRequest> categoryDtos) {
         categoryService.restoreCategories(categoryDtos);
 

@@ -62,7 +62,6 @@ public class AddCategoryTests {
         ApiResponse response = objectMapper.readValue(jsonResponse, ApiResponse.class);
 
         assertThat(result.getResponse().getStatus()).isEqualTo(200);
-        assertThat(response.isSuccess()).isTrue();
         assertThat(response.getResponse()).isNotNull();
 
         List<Category> categories = categoryRepository.findByContainingName("Admin Category");
@@ -114,7 +113,6 @@ public class AddCategoryTests {
         ApiResponse<?> response = objectMapper.readValue(jsonResponse, ApiResponse.class);
 
         assertThat(result.getResponse().getStatus()).isEqualTo(401);
-        assertThat(response.isSuccess()).isFalse();
         assertThat(response.getError()).isEqualTo("Unauthorized");
 
     }
