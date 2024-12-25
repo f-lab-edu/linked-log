@@ -23,7 +23,7 @@ public class SignUpForm {
     private MultipartFile profileImage;
 
     // Convert to SignUpDto
-    public SignUpDto toDto() {
-        return new SignUpDto(userId, password, nickname, email1, email2, phone1, phone2, phone3);
+    public SignUpRequest toDto() {
+        return new SignUpRequest(userId, password, nickname, email1, email2, phone1, phone2, phone3);
     }
 }

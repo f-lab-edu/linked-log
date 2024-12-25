@@ -5,13 +5,11 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 
-import java.time.LocalDateTime;
-
 @Data
 @Builder
 @AllArgsConstructor
-public class MyPageDto {
-    
+public class MyPageResponse {
+
     @NotEmpty(message = "프로필 이미지 경로")
     private String profileImageKey;
 

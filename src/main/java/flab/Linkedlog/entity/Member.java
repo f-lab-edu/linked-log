@@ -56,7 +56,7 @@ public class Member extends BaseEntity {
     @Builder
     public Member(String userId, String password, String nickName,
                   String email, String phone, MemberGrade memberGrade,
-                  MemberStatus memberStatus, BigDecimal cashPoint) {
+                  MemberStatus memberStatus, BigDecimal cashPoint, String profileImage) {
         this.userId = userId;
         this.password = password;
         this.nickName = nickName;
@@ -65,6 +65,7 @@ public class Member extends BaseEntity {
         this.memberGrade = memberGrade != null ? memberGrade : MemberGrade.GENERAL;
         this.memberStatus = memberStatus != null ? memberStatus : MemberStatus.NORMAL;
         this.cashPoint = cashPoint != null ? cashPoint : BigDecimal.ZERO;
+        this.profileImage = profileImage;
     }
 
     public void storeProfileImage(String profileImage) {

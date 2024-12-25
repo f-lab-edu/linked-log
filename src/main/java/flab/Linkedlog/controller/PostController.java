@@ -11,7 +11,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 
 @RestController
@@ -24,15 +26,17 @@ public class PostController {
     // 글 등록
     @PostMapping("/category/{categoryId}/write")
     @PreAuthorize("isAuthenticated()")
-    public ApiResponse<Long> createPost(@Valid @RequestBody CreatePostRequest createPostRequest,
-                                        @PathVariable Long categoryId) {
+    public ApiResponse<Long> createPost(
+            @Valid @RequestPart("createPostRequest") CreatePostRequest createPostRequest,
+            @PathVariable Long categoryId,
+            @RequestPart(required = false) List<MultipartFile> images) throws IOException {
         CustomUserDetails userDetails = (CustomUserDetails) SecurityContextHolder.
                 getContext().
                 getAuthentication().
                 getPrincipal();
         Long memberId = userDetails.getMemberId();
 
-        Long postId = postService.createPost(createPostRequest, categoryId, memberId);
+        Long postId = postService.createPost(createPostRequest, categoryId, memberId, images);
         return ApiResponse.success(postId);
     }
 
