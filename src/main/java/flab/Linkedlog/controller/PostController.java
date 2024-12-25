@@ -8,6 +8,7 @@ import flab.Linkedlog.dto.post.PostListResponse;
 import flab.Linkedlog.service.PostService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
@@ -24,10 +25,10 @@ public class PostController {
     private final PostService postService;
 
     // 글 등록
-    @PostMapping("/category/{categoryId}/write")
+    @PostMapping(value = "/category/{categoryId}/write", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("isAuthenticated()")
     public ApiResponse<Long> createPost(
-            @Valid @RequestPart("createPostRequest") CreatePostRequest createPostRequest,
+            @Valid @RequestPart CreatePostRequest createPostRequest,
             @PathVariable Long categoryId,
             @RequestPart(required = false) List<MultipartFile> images) throws IOException {
         CustomUserDetails userDetails = (CustomUserDetails) SecurityContextHolder.

@@ -3,7 +3,6 @@ package flab.Linkedlog.memberTest;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import flab.Linkedlog.controller.response.ApiResponse;
-import flab.Linkedlog.dto.member.SignUpForm;
 import flab.Linkedlog.dto.member.SignUpRequest;
 import flab.Linkedlog.entity.Member;
 import flab.Linkedlog.entity.enums.MemberGrade;
@@ -50,7 +49,7 @@ public class SignUpIntegrationTests {
     @DisplayName("회원 가입 성공 테스트")
     void signUpSuccessfulTest() throws Exception {
         // Given
-        SignUpForm signUpForm = SignUpForm.builder()
+        SignUpRequest signUpRequest = SignUpRequest.builder()
                 .userId("testUser")
                 .password("testpasswd")
                 .nickname("testNickname")
@@ -61,24 +60,27 @@ public class SignUpIntegrationTests {
                 .phone3("2345")
                 .build();
 
+        // Convert SignUpRequest to JSON
+        String signUpRequestJson = new ObjectMapper().writeValueAsString(signUpRequest);
+
+        // Create a MockMultipartFile for signUpRequest
+        MockMultipartFile signUpRequestPart = new MockMultipartFile(
+                "signUpRequest",                          // 요청 이름
+                "signUpRequest.json",                     // 파일 이름
+                "application/json",                       // MIME 타입
+                signUpRequestJson.getBytes()              // JSON 데이터
+        );
+
         // When
         MvcResult result = mockMvc.perform(multipart("/signup")
-                        .param("userId", signUpForm.getUserId())        // 폼 데이터 전송
-                        .param("password", signUpForm.getPassword())
-                        .param("nickname", signUpForm.getNickname())
-                        .param("email1", signUpForm.getEmail1())
-                        .param("email2", signUpForm.getEmail2())
-                        .param("phone1", signUpForm.getPhone1())
-                        .param("phone2", signUpForm.getPhone2())
-                        .param("phone3", signUpForm.getPhone3())
+                        .file("profileImage", new byte[0])  // 프로필 이미지를 비워두고 테스트
+                        .file(signUpRequestPart)             // signUpRequest를 MockMultipartFile로 전달
                         .contentType(MediaType.MULTIPART_FORM_DATA))
                 .andReturn();
-
 
         // Then
         String jsonResponse = result.getResponse().getContentAsString();
         ApiResponse response = objectMapper.readValue(jsonResponse, ApiResponse.class);
-
 
         assertThat(result.getResponse().getStatus()).isEqualTo(200);
         assertThat(response.getResponse()).isNotNull();
@@ -109,7 +111,7 @@ public class SignUpIntegrationTests {
     @DisplayName("회원 가입 중복 테스트")
     void signUpDuplicateTest() throws Exception {
 
-        SignUpForm initialSignUpForm = SignUpForm.builder()
+        SignUpRequest initialSignUpRequest = SignUpRequest.builder()
                 .userId("member01")
                 .password("passwd1")
                 .nickname("멤버1")
@@ -120,15 +122,21 @@ public class SignUpIntegrationTests {
                 .phone3("3333")
                 .build();
 
+        // Convert SignUpRequest to JSON
+        String signUpRequestJson = new ObjectMapper().writeValueAsString(initialSignUpRequest);
+
+        // Create a MockMultipartFile for signUpRequest
+        MockMultipartFile signUpRequestPart = new MockMultipartFile(
+                "signUpRequest",                          // 요청 이름
+                "signUpRequest.json",                     // 파일 이름
+                "application/json",                       // MIME 타입
+                signUpRequestJson.getBytes()              // JSON 데이터
+        );
+
+        // When (initial sign up)
         MvcResult initialResult = mockMvc.perform(multipart("/signup")
-                        .param("userId", initialSignUpForm.getUserId())
-                        .param("password", initialSignUpForm.getPassword())
-                        .param("nickname", initialSignUpForm.getNickname())
-                        .param("email1", initialSignUpForm.getEmail1())
-                        .param("email2", initialSignUpForm.getEmail2())
-                        .param("phone1", initialSignUpForm.getPhone1())
-                        .param("phone2", initialSignUpForm.getPhone2())
-                        .param("phone3", initialSignUpForm.getPhone3())
+                        .file("profileImage", new byte[0])    // 프로필 이미지를 비워두고 테스트
+                        .file(signUpRequestPart)              // signUpRequest를 MockMultipartFile로 전달
                         .contentType(MediaType.MULTIPART_FORM_DATA))
                 .andReturn();
 
@@ -138,7 +146,7 @@ public class SignUpIntegrationTests {
         assertThat(initialResult.getResponse().getStatus()).isEqualTo(200);
         assertThat(initialResponse.getResponse()).isEqualTo("member01");
 
-        SignUpForm duplicateSignUpForm = SignUpForm.builder()
+        SignUpRequest duplicateSignUpRequest = SignUpRequest.builder()
                 .userId("member01")
                 .password("passwd2")
                 .nickname("멤버2")
@@ -149,15 +157,21 @@ public class SignUpIntegrationTests {
                 .phone3("3333")
                 .build();
 
+        // Convert SignUpRequest to JSON
+        String duplicateSignUpRequestJson = new ObjectMapper().writeValueAsString(duplicateSignUpRequest);
+
+        // Create a MockMultipartFile for the duplicate signUpRequest
+        MockMultipartFile duplicateSignUpRequestPart = new MockMultipartFile(
+                "signUpRequest",                          // 요청 이름
+                "signUpRequest.json",                     // 파일 이름
+                "application/json",                       // MIME 타입
+                duplicateSignUpRequestJson.getBytes()     // JSON 데이터
+        );
+
+        // When (duplicate sign up)
         MvcResult duplicateResult = mockMvc.perform(multipart("/signup")
-                        .param("userId", duplicateSignUpForm.getUserId())
-                        .param("password", duplicateSignUpForm.getPassword())
-                        .param("nickname", duplicateSignUpForm.getNickname())
-                        .param("email1", duplicateSignUpForm.getEmail1())
-                        .param("email2", duplicateSignUpForm.getEmail2())
-                        .param("phone1", duplicateSignUpForm.getPhone1())
-                        .param("phone2", duplicateSignUpForm.getPhone2())
-                        .param("phone3", duplicateSignUpForm.getPhone3())
+                        .file("profileImage", new byte[0])    // 프로필 이미지를 비워두고 테스트
+                        .file(duplicateSignUpRequestPart)     // duplicate signUpRequest를 MockMultipartFile로 전달
                         .contentType(MediaType.MULTIPART_FORM_DATA))
                 .andReturn();
 
@@ -179,7 +193,7 @@ public class SignUpIntegrationTests {
     void signUpWithProfileImageTest() throws Exception {
 
         // Given
-        SignUpForm signUpForm = SignUpForm.builder()
+        SignUpRequest signUpRequest = SignUpRequest.builder()
                 .userId("testUser")
                 .password("testpasswd")
                 .nickname("testNickname")
@@ -190,26 +204,31 @@ public class SignUpIntegrationTests {
                 .phone3("2345")
                 .build();
 
+        // Convert SignUpRequest to JSON
+        String signUpRequestJson = new ObjectMapper().writeValueAsString(signUpRequest);
+
+        // Create a MockMultipartFile for signUpRequest
+        MockMultipartFile signUpRequestPart = new MockMultipartFile(
+                "signUpRequest",                          // 요청 이름
+                "signUpRequest.json",                     // 파일 이름
+                "application/json",                       // MIME 타입
+                signUpRequestJson.getBytes()              // JSON 데이터
+        );
+
+        // Create a MockMultipartFile for profile image
         MockMultipartFile profileImage = new MockMultipartFile(
                 "profileImage",
                 "test-image.png",
                 MediaType.IMAGE_PNG_VALUE,
-                "dummy image content".getBytes(StandardCharsets.UTF_8));
+                "dummy image content".getBytes(StandardCharsets.UTF_8)
+        );
 
         // When
         MvcResult result = mockMvc.perform(multipart("/signup")
                         .file("profileImage", profileImage.getBytes())  // 파일 전송
-                        .param("userId", signUpForm.getUserId())        // 폼 데이터 전송
-                        .param("password", signUpForm.getPassword())
-                        .param("nickname", signUpForm.getNickname())
-                        .param("email1", signUpForm.getEmail1())
-                        .param("email2", signUpForm.getEmail2())
-                        .param("phone1", signUpForm.getPhone1())
-                        .param("phone2", signUpForm.getPhone2())
-                        .param("phone3", signUpForm.getPhone3())
+                        .file(signUpRequestPart)                         // signUpRequest를 MockMultipartFile로 전달
                         .contentType(MediaType.MULTIPART_FORM_DATA))
                 .andReturn();
-
 
         // Then
         String jsonResponse = result.getResponse().getContentAsString();

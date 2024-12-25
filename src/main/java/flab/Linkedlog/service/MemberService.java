@@ -36,7 +36,7 @@ public class MemberService {
 
         String userId = signUpDto.getUserId();
         String rawPassword = signUpDto.getPassword();
-        String encodedPassword = passwordEncoder.encode(rawPassword); // 비밀번호 암호화
+        String encodedPassword = passwordEncoder.encode(rawPassword);
         String nickname = signUpDto.getNickname();
         String email = signUpDto.getEmail1() + "@" + signUpDto.getEmail2();
         String phone = signUpDto.getPhone1() + "-" +

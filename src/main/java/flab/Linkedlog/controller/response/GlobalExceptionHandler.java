@@ -103,5 +103,6 @@ public class GlobalExceptionHandler {
         ApiResponse<ErrorResponse> errorResponse = ApiResponse.error("NOT_FOUND", e.getMessage());
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
     }
+    
 
 }
