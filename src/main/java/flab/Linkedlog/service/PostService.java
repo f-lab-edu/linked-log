@@ -18,7 +18,6 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -100,10 +99,6 @@ public class PostService {
     @Transactional(readOnly = true)
     public List<PostListResponse> searchPostsByCategoryAndKeyword(Long categoryId, String keyword) {
 
-        if (keyword == null || keyword.trim().isEmpty()) {
-            throw new IllegalArgumentException("keyword must not be empty");
-        }
-
         return postRepository.findPostListInCategoryContainKeyword(categoryId, keyword).stream()
                 .map(post -> new PostListResponse(
                         post.getId(),
@@ -119,7 +114,7 @@ public class PostService {
     }
 
     @Transactional
-    public Optional<PostDetailResponse> getPostDetailById(Long categoryId, Long postId) {
+    public PostDetailResponse getPostDetailById(Long categoryId, Long postId) {
 
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new EntityNotFoundException("Post not found"));
@@ -128,13 +123,13 @@ public class PostService {
             throw new IllegalArgumentException("The post does not exist in the category");
         }
 
-        postRepository.incrementViewCount(postId);
+        post.incrementViews();
 
         List<String> imageUrls = postImageRepository.findAllByPostId(postId).stream()
                 .map(PostImage::getImageUrl)
                 .toList();
 
-        return Optional.of(new PostDetailResponse(
+        return new PostDetailResponse(
                 post.getId(),
                 post.getCategory().getId(),
                 post.getMember().getNickName(),
@@ -144,6 +139,6 @@ public class PostService {
                 post.getViews(),
                 post.getPrice(),
                 imageUrls
-        ));
+        );
     }
 }

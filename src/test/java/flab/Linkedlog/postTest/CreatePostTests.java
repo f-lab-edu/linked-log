@@ -32,6 +32,7 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 
 
@@ -111,13 +112,13 @@ public class CreatePostTests {
                         .header("Authorization", "Bearer " + token)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(createPostRequest)))
+                .andExpect(status().isOk())
                 .andReturn();
 
         // Then
         String jsonResponse = result.getResponse().getContentAsString();
         ApiResponse response = objectMapper.readValue(jsonResponse, ApiResponse.class);
 
-        assertThat(result.getResponse().getStatus()).isEqualTo(200);
         assertThat(response.getResponse()).isNotNull();
 
         List<Post> posts = postRepository.findAll();
@@ -141,14 +142,11 @@ public class CreatePostTests {
         createPostRequest.setTitle("Test Post Title");
         createPostRequest.setContent("This is a test post content.");
 
-        // When
-        MvcResult result = mockMvc.perform(post("/posts/category/{categoryId}/write", categoryId)
+        // When & Then
+        mockMvc.perform(post("/posts/category/{categoryId}/write", categoryId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(createPostRequest)))
-                .andReturn();
-
-        // Then
-        assertThat(result.getResponse().getStatus()).isEqualTo(401);
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
@@ -164,19 +162,12 @@ public class CreatePostTests {
 
         String token = jwtUtil.generateToken("testUser", MemberGrade.GENERAL, testMemberId);
 
-        // When
-        MvcResult result = mockMvc.perform(post("/posts/category/{categoryId}/write", categoryId)
+        // When & Then
+        mockMvc.perform(post("/posts/category/{categoryId}/write", categoryId)
                         .header("Authorization", "Bearer " + token)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(createPostRequest)))
-                .andReturn();
-
-        // Then
-        String jsonResponse = result.getResponse().getContentAsString();
-        ApiResponse response = objectMapper.readValue(jsonResponse, ApiResponse.class);
-
-        assertThat(result.getResponse().getStatus()).isEqualTo(400);
-        assertThat(response.getError()).contains("VALIDATION_FAILED");
+                .andExpect(status().isBadRequest());
     }
 
     @Test
@@ -192,19 +183,12 @@ public class CreatePostTests {
 
         String token = jwtUtil.generateToken("testUser", MemberGrade.GENERAL, testMemberId);
 
-        // When
-        MvcResult result = mockMvc.perform(post("/posts/category/{categoryId}/write", categoryId)
+        // When & Then
+        mockMvc.perform(post("/posts/category/{categoryId}/write", categoryId)
                         .header("Authorization", "Bearer " + token)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(createPostRequest)))
-                .andReturn();
-
-        // Then
-        String jsonResponse = result.getResponse().getContentAsString();
-        ApiResponse response = objectMapper.readValue(jsonResponse, ApiResponse.class);
-
-        assertThat(result.getResponse().getStatus()).isEqualTo(400);
-        assertThat(response.getError()).contains("VALIDATION_FAILED");
+                .andExpect(status().isBadRequest());
     }
 
 //

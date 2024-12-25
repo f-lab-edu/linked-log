@@ -21,13 +21,13 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
 @Transactional
@@ -178,7 +178,6 @@ public class PostSearchTests {
         ApiResponse<List<PostListResponse>> response = objectMapper.readValue(responseContent,
                 new TypeReference<>() {
                 });
-
         // Then
         assertThat(response.getResponse()).hasSize(0);
     }
@@ -192,15 +191,10 @@ public class PostSearchTests {
         String token = jwtUtil.generateToken("testReader", MemberGrade.GENERAL, 10000L);
         String keyword = "";
 
-        // When
-        MvcResult result = mockMvc.perform(get("/posts/category/{categoryId}/search", categoryId)
+        // When & Then
+        mockMvc.perform(get("/posts/category/{categoryId}/search", categoryId)
                         .param("keyword", keyword)
                         .header("Authorization", "Bearer " + token))
-                .andReturn();
-
-        // 응답 상태 코드 확인
-        assertThat(result.getResponse().getStatus()).isEqualTo(400);
-
+                .andExpect(status().isBadRequest());
     }
-
 }
