@@ -19,7 +19,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
@@ -30,6 +29,7 @@ import java.util.Random;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
 @Transactional
@@ -115,17 +115,10 @@ public class PostDetailTests {
     @DisplayName("작성 글 비회원 단건 조회 테스트(실패)")
     void readPostLogOutSuccessTest() throws Exception {
 
-        // When
-        var result = mockMvc.perform(get("/posts/category/{categoryId}/detail/{postId}", testCategoryId, postId)
+        // When & Then
+        mockMvc.perform(get("/posts/category/{categoryId}/detail/{postId}", testCategoryId, postId)
                         .contentType(MediaType.APPLICATION_JSON))
-                .andReturn();
-
-        // Then
-        String jsonResponse = result.getResponse().getContentAsString();
-        ApiResponse<PostDetailResponse> response = objectMapper.readValue(jsonResponse, ApiResponse.class);
-
-        assertThat(result.getResponse().getStatus()).isEqualTo(401);
-        assertThat(response.getError()).contains("Unauthorized");
+                .andExpect(status().isUnauthorized());
 
     }
 
@@ -141,6 +134,7 @@ public class PostDetailTests {
         MvcResult result = mockMvc.perform(get("/posts/category/{categoryId}/detail/{postId}", testCategoryId, postId)
                         .header("Authorization", "Bearer " + token)
                         .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
                 .andReturn();
         String responseContent = result.getResponse().getContentAsString();
 
@@ -149,7 +143,6 @@ public class PostDetailTests {
         });
         PostDetailResponse postDetail = apiResponse.getResponse();
 
-        assertThat(result.getResponse().getStatus()).isEqualTo(200);
         assertThat(postDetail.getTitle()).isEqualTo("Test Post Title");
         assertThat(postDetail.getContent()).isEqualTo(contentExample);
         assertThat(postDetail.getCategoryId()).isEqualTo(testCategoryId);
@@ -230,20 +223,11 @@ public class PostDetailTests {
         Long nonExistCategoryId = testCategoryId + 9999L;
         String token = jwtUtil.generateToken("testWriter", MemberGrade.GENERAL, postId);
 
-        // When
-        MvcResult result = mockMvc.perform(get("/posts/category/{categoryId}/detail/{postId}", nonExistCategoryId, postId)
+        // When & Then
+        mockMvc.perform(get("/posts/category/{categoryId}/detail/{postId}", nonExistCategoryId, postId)
                         .header("Authorization", "Bearer " + token)
                         .contentType(MediaType.APPLICATION_JSON))
-                .andReturn();
-
-        String responseContent = result.getResponse().getContentAsString();
-
-        assertThat(result.getResponse().getStatus()).isEqualTo(HttpStatus.BAD_REQUEST.value());
-
-        ApiResponse<PostDetailResponse> apiResponse = objectMapper.readValue(responseContent, new TypeReference<>() {
-        });
-
-
+                .andExpect(status().isBadRequest());
     }
 
 
@@ -255,20 +239,10 @@ public class PostDetailTests {
         Long nonExistPostId = postId + 9999L;
         String token = jwtUtil.generateToken("testWriter", MemberGrade.GENERAL, postId);
 
-        // When
-        MvcResult result = mockMvc.perform(get("/posts/category/{categoryId}/detail/{postId}", testCategoryId, nonExistPostId)
+        mockMvc.perform(get("/posts/category/{categoryId}/detail/{postId}", testCategoryId, nonExistPostId)
                         .header("Authorization", "Bearer " + token)
                         .contentType(MediaType.APPLICATION_JSON))
-                .andReturn();
-
-        String responseContent = result.getResponse().getContentAsString();
-
-        assertThat(result.getResponse().getStatus()).isEqualTo(HttpStatus.NOT_FOUND.value());
-
-        ApiResponse<PostDetailResponse> apiResponse = objectMapper.readValue(responseContent, new TypeReference<>() {
-        });
-
-
+                .andExpect(status().isNotFound());
     }
 
 

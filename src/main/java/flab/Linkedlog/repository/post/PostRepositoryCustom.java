@@ -8,6 +8,5 @@ public interface PostRepositoryCustom {
     List<Post> findPostListInCategory(Long categoryId);
 
     List<Post> findPostListInCategoryContainKeyword(Long categoryId, String keyword);
-
-    void incrementViewCount(Long postId);
+    
 }

@@ -51,6 +51,9 @@ public class PostController {
     public ApiResponse<List<PostListResponse>> searchPostsByCategoryAndKeyword(
             @PathVariable Long categoryId,
             @RequestParam String keyword) {
+        if (keyword == null || keyword.trim().isEmpty()) {
+            throw new IllegalArgumentException("keyword must not be empty");
+        }
         List<PostListResponse> posts = postService.searchPostsByCategoryAndKeyword(categoryId, keyword);
         return ApiResponse.success(posts);
     }
@@ -61,8 +64,7 @@ public class PostController {
     public ApiResponse<PostDetailResponse> getPostDetail(
             @PathVariable Long categoryId,
             @PathVariable Long postId) {
-        PostDetailResponse post = postService.getPostDetailById(categoryId, postId)
-                .orElse(null);
+        PostDetailResponse post = postService.getPostDetailById(categoryId, postId);
         return ApiResponse.success(post);
     }
 

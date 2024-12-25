@@ -1,15 +1,11 @@
 package flab.Linkedlog.repository.post;
 
-
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import flab.Linkedlog.entity.Post;
 import flab.Linkedlog.entity.QCategory;
 import flab.Linkedlog.entity.QMember;
 import flab.Linkedlog.entity.QPost;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.EntityNotFoundException;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -17,12 +13,10 @@ import java.util.List;
 public class PostRepositoryCustomImpl implements PostRepositoryCustom {
 
     private final JPAQueryFactory queryFactory;
-    private final EntityManager entityManager;
 
 
-    public PostRepositoryCustomImpl(EntityManager em, EntityManager entityManager) {
-        this.queryFactory = new JPAQueryFactory(em);
-        this.entityManager = entityManager;
+    public PostRepositoryCustomImpl(JPAQueryFactory queryFactory) {
+        this.queryFactory = queryFactory;
     }
 
     @Override
@@ -57,18 +51,5 @@ public class PostRepositoryCustomImpl implements PostRepositoryCustom {
                 )
                 .orderBy(post.createdAt.desc())
                 .fetch();
-    }
-
-    @Override
-    @Transactional
-    public void incrementViewCount(Long postId) {
-        // EntityManager로 Post 객체 조회
-        Post post = entityManager.find(Post.class, postId);
-        if (post == null) {
-            throw new EntityNotFoundException("Post not found");
-        }
-
-        post.incrementViews();
-        entityManager.merge(post);
     }
 }
