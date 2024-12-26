@@ -7,10 +7,12 @@ import flab.Linkedlog.dto.post.PostDetailResponse;
 import flab.Linkedlog.entity.Category;
 import flab.Linkedlog.entity.Member;
 import flab.Linkedlog.entity.Post;
+import flab.Linkedlog.entity.PostImage;
 import flab.Linkedlog.entity.enums.MemberGrade;
 import flab.Linkedlog.repository.CategoryRepository;
 import flab.Linkedlog.repository.MemberRepository;
 import flab.Linkedlog.repository.post.PostRepository;
+import flab.Linkedlog.repository.postImage.PostImageRepository;
 import flab.Linkedlog.util.JwtUtil;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -26,6 +28,8 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -55,17 +59,23 @@ public class PostDetailTests {
     @Autowired
     private MemberRepository memberRepository;
 
+    @Autowired
+    private PostImageRepository postImageRepository;
+
+
+    private Category testCategory;
+    private Member testWriter;
     private Long testReaderId;
     private Long testWriterId;
     private Long testCategoryId;
     private Long postId;
     @Value("${profile.default-image-url}")
     private String defaultProfileImage;
+    String contentExample = "가나다ㄱㄴㄷㅏㅖㅞABCabc12345＃＠※☆★/.,!?天地人あいうえおアイウエオ\uD83D\uDD22\uD83C\uDFB8\uD83D\uDCB2\uD83E\uDE99\uD83D\uDDA5\uFE0F\uD83D\uDD34⭕\uD83D\uDD20";
+
 
     @BeforeEach
     void setUp() {
-
-        String contentExample = "가나다ㄱㄴㄷㅏㅖㅞABCabc12345＃＠※☆★/.,!?天地人あいうえおアイウエオ\uD83D\uDD22\uD83C\uDFB8\uD83D\uDCB2\uD83E\uDE99\uD83D\uDDA5\uFE0F\uD83D\uDD34⭕\uD83D\uDD20";
 
         Member testReader = Member.builder()
                 .userId("testReader")
@@ -79,7 +89,7 @@ public class PostDetailTests {
         testReader = memberRepository.save(testReader);
         testReaderId = testReader.getId();
 
-        Member testWriter = Member.builder()
+        testWriter = Member.builder()
                 .userId("testWriter")
                 .password("testPassword")
                 .nickName("writerNickName")
@@ -91,7 +101,7 @@ public class PostDetailTests {
         testWriter = memberRepository.save(testWriter);
         testWriterId = testWriter.getId();
 
-        Category testCategory = Category.builder()
+        testCategory = Category.builder()
                 .name("Test Category")
                 .build();
         categoryRepository.save(testCategory);
@@ -131,10 +141,8 @@ public class PostDetailTests {
     @DisplayName("작성 글 회원 단건 조회 테스트(성공)")
     void readPostByMemberSuccessTest() throws Exception {
 
-        String contentExample = "가나다ㄱㄴㄷㅏㅖㅞABCabc12345＃＠※☆★/.,!?天地人あいうえおアイウエオ\uD83D\uDD22\uD83C\uDFB8\uD83D\uDCB2\uD83E\uDE99\uD83D\uDDA5\uFE0F\uD83D\uDD34⭕\uD83D\uDD20";
-
         // Given
-        String token = jwtUtil.generateToken("testWriter", MemberGrade.GENERAL, postId);
+        String token = jwtUtil.generateToken("testReader", MemberGrade.GENERAL, testReaderId);
 
         MvcResult result = mockMvc.perform(get("/posts/category/{categoryId}/detail/{postId}", testCategoryId, postId)
                         .header("Authorization", "Bearer " + token)
@@ -163,9 +171,13 @@ public class PostDetailTests {
     void countPostViewsTest() throws Exception {
 
         // Given
-        String token1 = jwtUtil.generateToken("member1", MemberGrade.GENERAL, postId);
-        String token2 = jwtUtil.generateToken("member2", MemberGrade.GENERAL, postId);
-        String token3 = jwtUtil.generateToken("member3", MemberGrade.GENERAL, postId);
+        Long testReaderId1 = 100L;
+        Long testReaderId2 = 200L;
+        Long testReaderId3 = 300L;
+
+        String token1 = jwtUtil.generateToken("member1", MemberGrade.GENERAL, testReaderId1);
+        String token2 = jwtUtil.generateToken("member2", MemberGrade.GENERAL, testReaderId2);
+        String token3 = jwtUtil.generateToken("member3", MemberGrade.GENERAL, testReaderId3);
 
         Random random = new Random();
         int viewsForMember1 = random.nextInt(10) + 1;
@@ -226,7 +238,7 @@ public class PostDetailTests {
 
         // Given
         Long nonExistCategoryId = testCategoryId + 9999L;
-        String token = jwtUtil.generateToken("testWriter", MemberGrade.GENERAL, postId);
+        String token = jwtUtil.generateToken("testReader", MemberGrade.GENERAL, testReaderId);
 
         // When & Then
         mockMvc.perform(get("/posts/category/{categoryId}/detail/{postId}", nonExistCategoryId, postId)
@@ -242,7 +254,7 @@ public class PostDetailTests {
 
         // Given
         Long nonExistPostId = postId + 9999L;
-        String token = jwtUtil.generateToken("testWriter", MemberGrade.GENERAL, postId);
+        String token = jwtUtil.generateToken("testReader", MemberGrade.GENERAL, testReaderId);
 
         mockMvc.perform(get("/posts/category/{categoryId}/detail/{postId}", testCategoryId, nonExistPostId)
                         .header("Authorization", "Bearer " + token)
@@ -250,5 +262,86 @@ public class PostDetailTests {
                 .andExpect(status().isNotFound());
     }
 
+
+    @Test
+    @DisplayName("이미지가 포함된 글 조회 테스트")
+    void readPostWithImagesSuccessTest() throws Exception {
+        // Given
+        int[] imageUrls = {11, 22, 13, 14, 25, 16, 27, 28, 29};
+
+        Post testPost1 = Post.builder()
+                .title("Test Post Title With Images")
+                .content("content")
+                .category(testCategory)
+                .member(testWriter)
+                .build();
+        testPost1 = postRepository.save(testPost1);
+        Long postId1 = testPost1.getId();
+
+        Post testPost2 = Post.builder()
+                .title("Test Post Title With Images")
+                .content("content")
+                .category(testCategory)
+                .member(testWriter)
+                .build();
+        testPost2 = postRepository.save(testPost2);
+        Long postId2 = testPost2.getId();
+
+        List<PostImage> postImages = new ArrayList<>();
+        for (int i = 0; i < imageUrls.length; i++) {
+            Post post = (imageUrls[i] < 20) ? testPost1 : testPost2;
+            String imageUrl = "imageUrls" + imageUrls[i];
+
+            PostImage postImage = PostImage.builder()
+                    .post(post)
+                    .imageUrl(imageUrl)
+                    .build();
+            postImages.add(postImage);
+        }
+
+        postImageRepository.saveAll(postImages);
+
+        String token = jwtUtil.generateToken("testReader", MemberGrade.GENERAL, testReaderId);
+
+        // When
+        MvcResult result1 = mockMvc.perform(get("/posts/category/{categoryId}/detail/{postId}", testCategoryId, postId1)
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        MvcResult result2 = mockMvc.perform(get("/posts/category/{categoryId}/detail/{postId}", testCategoryId, postId2)
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        // Then
+        String responseContent1 = result1.getResponse().getContentAsString();
+        ApiResponse<PostDetailResponse> apiResponse1 = objectMapper.readValue(responseContent1, new TypeReference<>() {
+        });
+        PostDetailResponse postDetail1 = apiResponse1.getResponse();
+
+        String responseContent2 = result2.getResponse().getContentAsString();
+        ApiResponse<PostDetailResponse> apiResponse2 = objectMapper.readValue(responseContent2, new TypeReference<>() {
+        });
+        PostDetailResponse postDetail2 = apiResponse2.getResponse();
+
+
+        assertThat(postDetail1.getImages()).hasSize(4);
+        List<String> expectedPost1Urls = List.of("imageUrls11", "imageUrls13", "imageUrls14", "imageUrls16");
+        for (int i = 0; i < postDetail1.getImages().size(); i++) {
+            assertThat(postDetail1.getImages().get(i)).isEqualTo(expectedPost1Urls.get(i));
+        }
+
+        assertThat(postDetail2.getImages()).hasSize(5);
+        List<String> expectedPost2Urls = List.of("imageUrls22", "imageUrls25", "imageUrls27", "imageUrls28", "imageUrls29");
+        for (int i = 0; i < postDetail2.getImages().size(); i++) {
+            assertThat(postDetail2.getImages().get(i)).isEqualTo(expectedPost2Urls.get(i));
+        }
+
+        postImageRepository.deleteAll();
+
+    }
 
 }

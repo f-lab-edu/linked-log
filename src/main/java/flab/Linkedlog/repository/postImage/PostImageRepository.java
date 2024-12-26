@@ -1,8 +1,6 @@
 package flab.Linkedlog.repository.postImage;
 
-import flab.Linkedlog.entity.Post;
 import flab.Linkedlog.entity.PostImage;
-import flab.Linkedlog.repository.post.PostRepositoryCustom;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

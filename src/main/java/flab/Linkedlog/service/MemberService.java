@@ -1,12 +1,10 @@
 package flab.Linkedlog.service;
 
 import flab.Linkedlog.dto.member.LogInRequest;
-import flab.Linkedlog.dto.member.MyPageResponse;
 import flab.Linkedlog.dto.member.SignUpRequest;
 import flab.Linkedlog.entity.Member;
 import flab.Linkedlog.repository.MemberRepository;
 import flab.Linkedlog.util.JwtUtil;
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -80,6 +78,7 @@ public class MemberService {
                 .orElseThrow(() -> new BadCredentialsException("User Not Found") {
                 });
 
+
         if (member == null) {
             throw new BadCredentialsException("User not found") {
             };
@@ -93,18 +92,18 @@ public class MemberService {
         return jwtUtil.generateToken(member.getUserId(), member.getMemberGrade(), member.getId());
     }
 
-    // 마이페이지
-    @Transactional(readOnly = true)
-    public Optional<MyPageResponse> getMyPageById(Long memberId) {
-        Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new EntityNotFoundException("Member not found"));
-        String profileImageUrl = s3Service.getFileUrl(member.getProfileImage());
-
-        return Optional.of(new MyPageResponse(
-                profileImageUrl,
-                member.getNickName()
-        ));
-    }
+//    // 마이페이지
+//    @Transactional(readOnly = true)
+//    public Optional<MyPageResponse> getMyPageById(Long memberId) {
+//        Member member = memberRepository.findById(memberId)
+//                .orElseThrow(() -> new EntityNotFoundException("Member not found"));
+//        String profileImageUrl = s3Service.getFileUrl(member.getProfileImage());
+//
+//        return Optional.of(new MyPageResponse(
+//                profileImageUrl,
+//                member.getNickName()
+//        ));
+//    }
 
 
 }

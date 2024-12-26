@@ -1,6 +1,5 @@
 package flab.Linkedlog.memberTest;
 
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import flab.Linkedlog.controller.response.ApiResponse;
 import flab.Linkedlog.dto.member.SignUpRequest;
@@ -8,6 +7,7 @@ import flab.Linkedlog.entity.Member;
 import flab.Linkedlog.entity.enums.MemberGrade;
 import flab.Linkedlog.entity.enums.MemberStatus;
 import flab.Linkedlog.repository.MemberRepository;
+import flab.Linkedlog.service.S3Service;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,7 +24,6 @@ import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 
 @SpringBootTest
@@ -43,6 +42,9 @@ public class SignUpIntegrationTests {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private S3Service s3Service;
 
 
     @Test
@@ -65,16 +67,16 @@ public class SignUpIntegrationTests {
 
         // Create a MockMultipartFile for signUpRequest
         MockMultipartFile signUpRequestPart = new MockMultipartFile(
-                "signUpRequest",                          // 요청 이름
-                "signUpRequest.json",                     // 파일 이름
-                "application/json",                       // MIME 타입
-                signUpRequestJson.getBytes()              // JSON 데이터
+                "signUpRequest",
+                "signUpRequest.json",
+                "application/json",
+                signUpRequestJson.getBytes()
         );
 
         // When
         MvcResult result = mockMvc.perform(multipart("/signup")
-                        .file("profileImage", new byte[0])  // 프로필 이미지를 비워두고 테스트
-                        .file(signUpRequestPart)             // signUpRequest를 MockMultipartFile로 전달
+                        .file("profileImage", new byte[0])
+                        .file(signUpRequestPart)
                         .contentType(MediaType.MULTIPART_FORM_DATA))
                 .andReturn();
 
@@ -127,16 +129,16 @@ public class SignUpIntegrationTests {
 
         // Create a MockMultipartFile for signUpRequest
         MockMultipartFile signUpRequestPart = new MockMultipartFile(
-                "signUpRequest",                          // 요청 이름
-                "signUpRequest.json",                     // 파일 이름
-                "application/json",                       // MIME 타입
-                signUpRequestJson.getBytes()              // JSON 데이터
+                "signUpRequest",
+                "signUpRequest.json",
+                "application/json",
+                signUpRequestJson.getBytes()
         );
 
         // When (initial sign up)
         MvcResult initialResult = mockMvc.perform(multipart("/signup")
-                        .file("profileImage", new byte[0])    // 프로필 이미지를 비워두고 테스트
-                        .file(signUpRequestPart)              // signUpRequest를 MockMultipartFile로 전달
+                        .file("profileImage", new byte[0])
+                        .file(signUpRequestPart)
                         .contentType(MediaType.MULTIPART_FORM_DATA))
                 .andReturn();
 
@@ -157,21 +159,19 @@ public class SignUpIntegrationTests {
                 .phone3("3333")
                 .build();
 
-        // Convert SignUpRequest to JSON
         String duplicateSignUpRequestJson = new ObjectMapper().writeValueAsString(duplicateSignUpRequest);
 
-        // Create a MockMultipartFile for the duplicate signUpRequest
         MockMultipartFile duplicateSignUpRequestPart = new MockMultipartFile(
-                "signUpRequest",                          // 요청 이름
-                "signUpRequest.json",                     // 파일 이름
-                "application/json",                       // MIME 타입
-                duplicateSignUpRequestJson.getBytes()     // JSON 데이터
+                "signUpRequest",
+                "signUpRequest.json",
+                "application/json",
+                duplicateSignUpRequestJson.getBytes()
         );
 
-        // When (duplicate sign up)
+        // When
         MvcResult duplicateResult = mockMvc.perform(multipart("/signup")
-                        .file("profileImage", new byte[0])    // 프로필 이미지를 비워두고 테스트
-                        .file(duplicateSignUpRequestPart)     // duplicate signUpRequest를 MockMultipartFile로 전달
+                        .file("profileImage", new byte[0])
+                        .file(duplicateSignUpRequestPart)
                         .contentType(MediaType.MULTIPART_FORM_DATA))
                 .andReturn();
 
@@ -181,7 +181,6 @@ public class SignUpIntegrationTests {
         assertThat(duplicateResult.getResponse().getStatus()).isEqualTo(500);
         assertThat(duplicateResponse.getError()).isEqualTo("INVALID_STATE");
 
-        // Verify that the initial member still exists in the repository
         Member existingMember = memberRepository.findByUserId("member01")
                 .orElseThrow(() -> new RuntimeException("회원이 존재하지 않습니다"));
         assertThat(existingMember).isNotNull();
@@ -204,18 +203,15 @@ public class SignUpIntegrationTests {
                 .phone3("2345")
                 .build();
 
-        // Convert SignUpRequest to JSON
         String signUpRequestJson = new ObjectMapper().writeValueAsString(signUpRequest);
 
-        // Create a MockMultipartFile for signUpRequest
         MockMultipartFile signUpRequestPart = new MockMultipartFile(
-                "signUpRequest",                          // 요청 이름
-                "signUpRequest.json",                     // 파일 이름
-                "application/json",                       // MIME 타입
-                signUpRequestJson.getBytes()              // JSON 데이터
+                "signUpRequest",
+                "signUpRequest.json",
+                "application/json",
+                signUpRequestJson.getBytes()
         );
 
-        // Create a MockMultipartFile for profile image
         MockMultipartFile profileImage = new MockMultipartFile(
                 "profileImage",
                 "test-image.png",
@@ -225,8 +221,8 @@ public class SignUpIntegrationTests {
 
         // When
         MvcResult result = mockMvc.perform(multipart("/signup")
-                        .file("profileImage", profileImage.getBytes())  // 파일 전송
-                        .file(signUpRequestPart)                         // signUpRequest를 MockMultipartFile로 전달
+                        .file("profileImage", profileImage.getBytes())
+                        .file(signUpRequestPart)
                         .contentType(MediaType.MULTIPART_FORM_DATA))
                 .andReturn();
 
@@ -243,10 +239,17 @@ public class SignUpIntegrationTests {
 
         assertThat(member).isNotNull();
         assertThat(member.getProfileImage()).isNotNull();
-
 //        String profileImageFileName = member.getProfileImage();
 //        assertThat(profileImageFileName).endsWith("test-image.png");
 //        assertThat(profileImageFileName).contains("_");
+
+        String profileImageUrl = member.getProfileImage();
+        String profileImageKey = profileImageUrl.substring(profileImageUrl.lastIndexOf("/") + 1);
+
+        String s3Url = s3Service.getFileUrl(profileImageKey);
+        assertThat(s3Url).contains(profileImageKey);
+
+        s3Service.deleteFile(profileImageKey);
 
     }
 

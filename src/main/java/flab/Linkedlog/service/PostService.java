@@ -33,23 +33,23 @@ public class PostService {
 
 
     // 글 등록
-    public Long createPost(CreatePostRequest postDto, Long categoryId, Long memberId, List<MultipartFile> images) throws IOException {
+    public Long createPost(CreatePostRequest createPostRequest, Long categoryId, Long memberId, List<MultipartFile> images) throws IOException {
 
-        if (postDto.getTitle() == null || postDto.getTitle().isBlank()) {
-            throw new IllegalArgumentException("Title must not be empty");
+        if (createPostRequest.getTitle() == null || createPostRequest.getTitle().isBlank()) {
+            throw new IllegalArgumentException();
         }
-        if (postDto.getContent() == null || postDto.getContent().isBlank()) {
-            throw new IllegalArgumentException("Content must not be empty");
+        if (createPostRequest.getContent() == null || createPostRequest.getContent().isBlank()) {
+            throw new IllegalArgumentException();
         }
         if (images != null && images.size() > 20) {
-            throw new IllegalArgumentException("You can upload up to 20 images only");
+            throw new IllegalArgumentException();
         }
 
         Post post = Post.builder()
                 .member(memberRepository.findById(memberId).orElseThrow(EntityNotFoundException::new))
                 .category(categoryRepository.findById(categoryId).orElseThrow(EntityNotFoundException::new))
-                .title(postDto.getTitle())
-                .content(postDto.getContent())
+                .title(createPostRequest.getTitle())
+                .content(createPostRequest.getContent())
                 .build();
 
         postRepository.save(post);
@@ -71,8 +71,7 @@ public class PostService {
 
         return post.getId();
     }
-
-
+    
     // 글 조회 1: 특정 카테고리의 글들을 날짜 내림차순으로 출력
     @Transactional(readOnly = true)
     public List<PostListResponse> getPostsByCategory(Long categoryId) {
@@ -113,6 +112,7 @@ public class PostService {
                 .collect(Collectors.toList());
     }
 
+    // 글 상세
     @Transactional
     public PostDetailResponse getPostDetailById(Long categoryId, Long postId) {
 

@@ -6,9 +6,6 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
-
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -26,7 +23,7 @@ public class PostImage {
     @Column(nullable = false)
     private String imageUrl;
 
-    
+
     @Builder
     public PostImage(Post post, String imageUrl) {
         this.post = post;
