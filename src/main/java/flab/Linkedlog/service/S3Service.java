@@ -18,7 +18,7 @@ public class S3Service {
     private final S3Client s3Client;
 
     @Value("${aws.s3.bucket}")
-    private String bucketName;
+    private String defaultBucketName;
 
     public S3Service(S3Client s3Client) {
         this.s3Client = s3Client;
@@ -26,8 +26,8 @@ public class S3Service {
 
 
     // 이미지 업로드
-    public String uploadFile(MultipartFile file) throws IOException {
-        String key = System.currentTimeMillis() + "_" + file.getOriginalFilename();
+    public String uploadFile(MultipartFile file, String bucketName, String folderName) throws IOException {
+        String key = folderName + "/" + System.currentTimeMillis() + "_" + file.getOriginalFilename();
 
         PutObjectRequest putObjectRequest = PutObjectRequest.builder()
                 .bucket(bucketName)
@@ -42,14 +42,14 @@ public class S3Service {
     }
 
     // 이미지 다운로드 URL 생성
-    public String getFileUrl(String key) {
+    public String getFileUrl(String key, String bucketName) {
         return s3Client.utilities()
                 .getUrl(builder -> builder.bucket(bucketName).key(key))
                 .toExternalForm();
     }
 
     // 이미지 삭제
-    public void deleteFile(String key) {
+    public void deleteFile(String key, String bucketName) {
         DeleteObjectRequest deleteObjectRequest = DeleteObjectRequest.builder()
                 .bucket(bucketName)
                 .key(key)

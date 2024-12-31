@@ -11,8 +11,10 @@ import flab.Linkedlog.repository.postImage.PostImageRepository;
 import jakarta.persistence.EntityNotFoundException;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -21,6 +23,7 @@ import java.util.Collections;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 @Service
@@ -34,19 +37,14 @@ public class PostService {
     private final flab.Linkedlog.repository.post.PostRepository postRepository;
     private final S3Service s3Service;
 
+    @Value("${aws.s3.bucket}")
+    private String bucketName;
+
+    @Value("${post-image.default-folder-path}")
+    private String folderName;
 
     // 글 등록
     public Long createPost(CreatePostRequest createPostRequest, Long categoryId, Long memberId, List<MultipartFile> images) throws IOException {
-
-        if (createPostRequest.getTitle() == null || createPostRequest.getTitle().isBlank()) {
-            throw new IllegalArgumentException();
-        }
-        if (createPostRequest.getContent() == null || createPostRequest.getContent().isBlank()) {
-            throw new IllegalArgumentException();
-        }
-        if (images != null && images.size() > 20) {
-            throw new IllegalArgumentException();
-        }
 
         Post post = Post.builder()
                 .member(memberRepository.findById(memberId).orElseThrow(EntityNotFoundException::new))
@@ -58,17 +56,18 @@ public class PostService {
         postRepository.save(post);
 
         if (images != null && !images.isEmpty()) {
-            List<PostImage> postImages = new ArrayList<>();
+            List<CompletableFuture<PostImage>> futureList = new ArrayList<>();
+
             for (MultipartFile image : images) {
                 if (!image.isEmpty()) {
-                    String imageUrl = s3Service.uploadFile(image);
-                    PostImage postImage = PostImage.builder()
-                            .post(post)
-                            .imageUrl(imageUrl)
-                            .build();
-                    postImages.add(postImage);
+                    CompletableFuture<PostImage> uploadFuture = uploadPostImageAsync(image, post);
+                    futureList.add(uploadFuture);
                 }
             }
+            List<PostImage> postImages = futureList.stream()
+                    .map(CompletableFuture::join)
+                    .collect(Collectors.toList());
+
             postImageRepository.saveAll(postImages);
         }
 
@@ -150,5 +149,15 @@ public class PostService {
                 post.getPrice(),
                 imageUrls
         );
+    }
+
+    @Async
+    public CompletableFuture<PostImage> uploadPostImageAsync(MultipartFile image, Post post) throws IOException {
+        String imageUrl = s3Service.uploadFile(image, bucketName, folderName);
+        PostImage postImage = PostImage.builder()
+                .post(post)
+                .imageUrl(imageUrl)
+                .build();
+        return CompletableFuture.completedFuture(postImage);
     }
 }

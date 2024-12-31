@@ -39,6 +39,16 @@ public class PostController {
                 getPrincipal();
         Long memberId = userDetails.getMemberId();
 
+        if (createPostRequest.getTitle() == null || createPostRequest.getTitle().isBlank()) {
+            throw new IllegalArgumentException();
+        }
+        if (createPostRequest.getContent() == null || createPostRequest.getContent().isBlank()) {
+            throw new IllegalArgumentException();
+        }
+        if (images != null && images.size() > 20) {
+            throw new IllegalArgumentException();
+        }
+
         Long postId = postService.createPost(createPostRequest, categoryId, memberId, images);
         return ApiResponse.success(postId);
     }

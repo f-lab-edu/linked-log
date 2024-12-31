@@ -7,6 +7,7 @@ import flab.Linkedlog.repository.MemberRepository;
 import flab.Linkedlog.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -15,6 +16,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
 @Service
 @Transactional
@@ -28,6 +30,12 @@ public class MemberService {
 
     @Value("${profile.default-image-url}")
     private String defaultProfileImage;
+
+    @Value("${profile.default-folder-path}")
+    private String defaultProfilepath;
+
+    @Value("${aws.s3.bucket}")
+    private String bucketName;
 
     // 회원가입
     public Long signUp(SignUpRequest signUpDto, MultipartFile profileImage) throws IOException {
@@ -46,20 +54,19 @@ public class MemberService {
                 .nickName(nickname)
                 .email(email)
                 .phone(phone)
+                .profileImage(defaultProfilepath + defaultProfileImage)
                 .build();
-
-        if (profileImage != null && !profileImage.isEmpty()) {
-            String imageKey = s3Service.uploadFile(profileImage);
-            member.storeProfileImage(imageKey);
-        } else {
-            member.storeProfileImage(defaultProfileImage);
-        }
-
 
         validateDuplicateMember(member);
         memberRepository.save(member);
-        return member.getId();
 
+        if (profileImage != null && !profileImage.isEmpty()) {
+            CompletableFuture<Void> uploadFuture = uploadProfileImageAsync(profileImage, member);
+            uploadFuture.thenRun(() -> {
+                memberRepository.save(member);
+            });
+        }
+        return member.getId();
     }
 
     public void validateDuplicateMember(Member member) {
@@ -105,6 +112,13 @@ public class MemberService {
 //        ));
 //    }
 
+
+    @Async
+    public CompletableFuture<Void> uploadProfileImageAsync(MultipartFile profileImage, Member member) throws IOException {
+        String imageKey = s3Service.uploadFile(profileImage, bucketName, defaultProfilepath);
+        member.storeProfileImage(imageKey);
+        return CompletableFuture.completedFuture(null);
+    }
 
 }
 
