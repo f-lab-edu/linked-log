@@ -11,10 +11,13 @@ import flab.Linkedlog.repository.postImage.PostImageRepository;
 import jakarta.persistence.EntityNotFoundException;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.Collections;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -71,34 +74,13 @@ public class PostService {
 
         return post.getId();
     }
-    
+
     // 글 조회 1: 특정 카테고리의 글들을 날짜 내림차순으로 출력
     @Transactional(readOnly = true)
-    public List<PostListResponse> getPostsByCategory(Long categoryId) {
-        return postRepository.findPostListInCategory(categoryId).stream()
-                .map(post -> {
+    public PageImpl<PostListResponse> getPostsByCategory(Long categoryId, Pageable pageable) {
+        PageImpl<Post> postsPage = postRepository.findPostListInCategory(categoryId, pageable);
 
-                    // PostListDto 생성
-                    return new PostListResponse(
-                            post.getId(),
-                            post.getTitle(),
-                            post.getContent(),
-                            post.getCreatedAt(),
-                            post.getCategory().getName(),
-                            post.getMember().getNickName(),
-                            post.getViews(),
-                            post.getPrice()
-                    );
-                })
-                .collect(Collectors.toList());
-    }
-
-
-    // 글 조회 2: 특정 카테고리의 글 중 제목 또는 내용에 특정 문자열 포함된 글을 출력
-    @Transactional(readOnly = true)
-    public List<PostListResponse> searchPostsByCategoryAndKeyword(Long categoryId, String keyword) {
-
-        return postRepository.findPostListInCategoryContainKeyword(categoryId, keyword).stream()
+        List<PostListResponse> postListResponses = postsPage.getContent().stream()
                 .map(post -> new PostListResponse(
                         post.getId(),
                         post.getTitle(),
@@ -110,6 +92,34 @@ public class PostService {
                         post.getPrice()
                 ))
                 .collect(Collectors.toList());
+
+        return new PageImpl<>(postListResponses, pageable, postsPage.getTotalElements());
+    }
+
+
+    // 글 조회 2: 특정 카테고리의 글 중 제목 또는 내용에 특정 문자열 포함된 글을 출력
+    @Transactional(readOnly = true)
+    public PageImpl<PostListResponse> searchPostsByCategoryAndKeyword(Long categoryId, String keyword, Pageable pageable) {
+        PageImpl<Post> postsPage = postRepository.findPostListInCategoryContainKeyword(categoryId, keyword, pageable);
+
+        if (postsPage.isEmpty()) {
+            return new PageImpl<>(Collections.emptyList(), pageable, 0);
+        }
+
+        List<PostListResponse> postListResponses = postsPage.getContent().stream()
+                .map(post -> new PostListResponse(
+                        post.getId(),
+                        post.getTitle(),
+                        post.getContent(),
+                        post.getCreatedAt(),
+                        post.getCategory().getName(),
+                        post.getMember().getNickName(),
+                        post.getViews(),
+                        post.getPrice()
+                ))
+                .collect(Collectors.toList());
+
+        return new PageImpl<>(postListResponses, pageable, postsPage.getTotalElements());
     }
 
     // 글 상세

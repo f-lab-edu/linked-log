@@ -2,6 +2,7 @@ package flab.Linkedlog.dto.post;
 
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.PositiveOrZero;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -34,10 +35,10 @@ public class PostListResponse {
     @NotNull(message = "작성자")
     private String nickname;
 
-    @Positive(message = "조회수는 0 이상의 값이어야 합니다")
+    @PositiveOrZero(message = "조회수는 0 이상의 값이어야 합니다")
     private int viewes;
 
-    @Positive(message = "유료 금액은 0 이상의 값이어야 합니다")
+    @PositiveOrZero(message = "유료 금액은 0 이상의 값이어야 합니다")
     private BigDecimal price;
 
 }

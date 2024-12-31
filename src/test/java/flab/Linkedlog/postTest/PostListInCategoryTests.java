@@ -4,6 +4,7 @@ package flab.Linkedlog.postTest;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import flab.Linkedlog.controller.response.ApiResponse;
+import flab.Linkedlog.controller.response.RestPageImpl;
 import flab.Linkedlog.dto.post.PostListResponse;
 import flab.Linkedlog.entity.Category;
 import flab.Linkedlog.entity.Member;
@@ -13,6 +14,7 @@ import flab.Linkedlog.repository.CategoryRepository;
 import flab.Linkedlog.repository.MemberRepository;
 import flab.Linkedlog.repository.post.PostRepository;
 import flab.Linkedlog.util.JwtUtil;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -21,13 +23,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.Page;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.assertj.core.api.Assertions.assertThat;
-
-import java.util.List;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
 @Transactional
@@ -139,26 +141,33 @@ public class PostListInCategoryTests {
 
         // When
         String responseContent = mockMvc.perform(get("/posts/category/{categoryId}", categoryId)
-                        .header("Authorization", "Bearer " + token))
+                        .header("Authorization", "Bearer " + token)
+                        .param("page", "0")
+                        .param("size", "5"))
+                .andExpect(status().isOk())
                 .andReturn()
                 .getResponse()
                 .getContentAsString();
 
-        ApiResponse<List<PostListResponse>> response = objectMapper.readValue(responseContent,
-                new TypeReference<>() {
-                });
+        ApiResponse<RestPageImpl<PostListResponse>> response = objectMapper.readValue(
+                responseContent, new TypeReference<>() {
+                }
+        );
 
         // Then
-        assertThat(response.getResponse()).hasSize(7);
-        assertThat(response.getResponse().get(0).getTitle()).isEqualTo("파이썬 2강");
-        assertThat(response.getResponse().get(1).getTitle()).isEqualTo("파이썬 1강");
-        assertThat(response.getResponse().get(2).getTitle()).isEqualTo("자바 3강");
-        assertThat(response.getResponse().get(3).getTitle()).isEqualTo("자바 2강");
-        assertThat(response.getResponse().get(4).getTitle()).isEqualTo("자바 1강");
-        assertThat(response.getResponse().get(5).getTitle()).isEqualTo("C 2강");
-        assertThat(response.getResponse().get(6).getTitle()).isEqualTo("C 1강");
+        Page<PostListResponse> postsPage = response.getResponse();
 
+        assertThat(postsPage.getContent()).hasSize(5);
+        assertThat(postsPage.getTotalElements()).isEqualTo(7);
+        assertThat(postsPage.getTotalPages()).isEqualTo(2);
+
+        assertThat(postsPage.getContent().get(0).getTitle()).isEqualTo("파이썬 2강");
+        assertThat(postsPage.getContent().get(1).getTitle()).isEqualTo("파이썬 1강");
+        assertThat(postsPage.getContent().get(2).getTitle()).isEqualTo("자바 3강");
+        assertThat(postsPage.getContent().get(3).getTitle()).isEqualTo("자바 2강");
+        assertThat(postsPage.getContent().get(4).getTitle()).isEqualTo("자바 1강");
     }
+
 
     @Test
     @DisplayName("회원이 특정 카테고리의 글 조회")
@@ -170,17 +179,21 @@ public class PostListInCategoryTests {
         for (int i = 0; i < 3; i++) {
             // When
             String responseContent = mockMvc.perform(get("/posts/category/{categoryId}", categoryIds[i])
-                            .header("Authorization", "Bearer " + token))
+                            .header("Authorization", "Bearer " + token)
+                            .param("page", "0")
+                            .param("size", "10"))
+                    .andExpect(status().isOk())
                     .andReturn()
                     .getResponse()
                     .getContentAsString();
 
-            ApiResponse<List<PostListResponse>> response = objectMapper.readValue(responseContent,
+            ApiResponse<RestPageImpl<PostListResponse>> response = objectMapper.readValue(responseContent,
                     new TypeReference<>() {
                     });
+            RestPageImpl<PostListResponse> pageResponse = response.getResponse();
 
-            for (int j = 0; j < response.getResponse().size(); j++) {
-                postTitleLists[i][j] = response.getResponse().get(j).getTitle();
+            for (int j = 0; j < pageResponse.getContent().size(); j++) {
+                postTitleLists[i][j] = pageResponse.getContent().get(j).getTitle();
             }
         }
 
@@ -189,6 +202,40 @@ public class PostListInCategoryTests {
         assertThat(postTitleLists[1]).containsExactly("햄스터들", "병아리들", "토끼들", "고양이들", "강아지들", null, null, null, null, null);
         assertThat(postTitleLists[2]).containsExactly("파이썬 2강", "파이썬 1강", "자바 3강", "자바 2강", "자바 1강", "C 2강", "C 1강", null, null, null);
 
+    }
+    
+    @Test
+    @DisplayName("회원이 빈 카테고리의 글 조회")
+    void getPostsByEmptyCategoryTest() throws Exception {
+        // Given
+
+        Category emptyCategory = Category.builder()
+                .name("empty Category Name")
+                .build();
+
+        categoryRepository.save(emptyCategory);
+        Long emptyCategoryId = emptyCategory.getId();
+
+        String token = jwtUtil.generateToken("testReader", MemberGrade.GENERAL, 10000L);
+
+        // When
+        String responseContent = mockMvc.perform(get("/posts/category/{categoryId}", emptyCategoryId)
+                        .header("Authorization", "Bearer " + token)
+                        .param("page", "0")
+                        .param("size", "5"))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        ApiResponse<RestPageImpl<PostListResponse>> response = objectMapper.readValue(
+                responseContent, new TypeReference<>() {
+                }
+        );
+        Page<PostListResponse> postsPage = response.getResponse();
+
+        // Then
+        assertThat(postsPage.getContent()).hasSize(0);
     }
 
 

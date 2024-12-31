@@ -1,12 +1,12 @@
 package flab.Linkedlog.repository.post;
 
 import flab.Linkedlog.entity.Post;
-
-import java.util.List;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 
 public interface PostRepositoryCustom {
-    List<Post> findPostListInCategory(Long categoryId);
+    PageImpl<Post> findPostListInCategory(Long categoryId, Pageable pageable);
 
-    List<Post> findPostListInCategoryContainKeyword(Long categoryId, String keyword);
-    
+    PageImpl<Post> findPostListInCategoryContainKeyword(Long categoryId, String keyword, Pageable pageable);
+
 }

@@ -8,6 +8,8 @@ import flab.Linkedlog.dto.post.PostListResponse;
 import flab.Linkedlog.service.PostService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -44,22 +46,37 @@ public class PostController {
     // 글 조회 1: 특정 카테고리의 글 조회
     @GetMapping("/category/{categoryId}")
     @PreAuthorize("permitAll()")
-    public ApiResponse<List<PostListResponse>> getPostsByCategory(@PathVariable Long categoryId) {
-        List<PostListResponse> posts = postService.getPostsByCategory(categoryId);
+    public ApiResponse<PageImpl<PostListResponse>> getPostsByCategory(
+            @PathVariable Long categoryId,
+            Pageable pageable) {
 
+        if (pageable.getPageSize() <= 0) {
+            PageImpl<PostListResponse> emptyPage = new PageImpl<>(List.of(), pageable, 0);
+            return ApiResponse.success(emptyPage);
+        }
+
+        PageImpl<PostListResponse> posts = postService.getPostsByCategory(categoryId, pageable);
         return ApiResponse.success(posts);
     }
 
     // 글 조회 2: 특정 카테고리에서 키워드로 검색
     @GetMapping("/category/{categoryId}/search")
     @PreAuthorize("permitAll()")
-    public ApiResponse<List<PostListResponse>> searchPostsByCategoryAndKeyword(
+    public ApiResponse<PageImpl<PostListResponse>> searchPostsByCategoryAndKeyword(
             @PathVariable Long categoryId,
-            @RequestParam String keyword) {
+            @RequestParam String keyword,
+            Pageable pageable) {
+
         if (keyword == null || keyword.trim().isEmpty()) {
             throw new IllegalArgumentException("keyword must not be empty");
         }
-        List<PostListResponse> posts = postService.searchPostsByCategoryAndKeyword(categoryId, keyword);
+
+        if (pageable.getPageSize() <= 0) {
+            PageImpl<PostListResponse> emptyPage = new PageImpl<>(List.of(), pageable, 0);
+            return ApiResponse.success(emptyPage);
+        }
+
+        PageImpl<PostListResponse> posts = postService.searchPostsByCategoryAndKeyword(categoryId, keyword, pageable);
         return ApiResponse.success(posts);
     }
 
