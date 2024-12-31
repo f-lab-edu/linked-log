@@ -1,5 +1,6 @@
 package flab.Linkedlog.dto.chat;
 
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.AllArgsConstructor;
@@ -16,10 +17,10 @@ public class ChatRoomListResponse {
     @NotNull(message = "채팅방 아이디")
     private Long id;
 
-    @NotNull(message = "채팅방 제목")
+    @NotBlank(message = "채팅방 제목")
     private String title;
 
-    @NotNull(message = "채팅방 개설자")
+    @NotBlank(message = "채팅방 개설자")
     private String nickName;
 
     @NotNull(message = "비밀번호 유무")

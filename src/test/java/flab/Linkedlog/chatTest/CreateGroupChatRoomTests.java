@@ -1,5 +1,6 @@
 package flab.Linkedlog.chatTest;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import flab.Linkedlog.controller.response.ApiResponse;
 import flab.Linkedlog.dto.chat.ChatRoomCreateRequest;
@@ -8,6 +9,7 @@ import flab.Linkedlog.entity.Member;
 import flab.Linkedlog.entity.enums.ChatRoomType;
 import flab.Linkedlog.entity.enums.MemberGrade;
 import flab.Linkedlog.repository.MemberRepository;
+import flab.Linkedlog.repository.chat.ChatMemberRepository;
 import flab.Linkedlog.repository.chat.ChatRoomRepository;
 import flab.Linkedlog.util.JwtUtil;
 import org.junit.jupiter.api.AfterEach;
@@ -33,7 +35,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 @SpringBootTest
 @Transactional
 @AutoConfigureMockMvc
-public class createGroupChatRoomTests {
+public class CreateGroupChatRoomTests {
 
     @Autowired
     private MockMvc mockMvc;
@@ -51,14 +53,15 @@ public class createGroupChatRoomTests {
     private ChatRoomRepository chatRoomRepository;
 
     @Autowired
-    private PasswordEncoder passwordEncoder;
+    private ChatMemberRepository chatMemberRepository;
 
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     private Long testMemberId;
     @Value("${profile.default-image-url}")
     private String defaultProfileImage;
     String token;
-
 
     @BeforeEach
     void setUp() {
@@ -79,6 +82,7 @@ public class createGroupChatRoomTests {
 
     @AfterEach
     void tearDown() {
+        chatMemberRepository.deleteAll();
         chatRoomRepository.deleteAll();
         memberRepository.deleteAll();
     }
@@ -104,7 +108,10 @@ public class createGroupChatRoomTests {
 
         // Then
         String jsonResponse = result.getResponse().getContentAsString();
-        ApiResponse response = objectMapper.readValue(jsonResponse, ApiResponse.class);
+        ApiResponse<Long> response = objectMapper.readValue(jsonResponse, new TypeReference<ApiResponse<Long>>() {
+        });
+
+        System.out.println("Response memberId Type: " + ((Object) response.getResponse()).getClass().getName()); // response.getResponse()의 클래스 이름 출력
 
         assertThat(response.getResponse()).isNotNull();
 

@@ -38,7 +38,8 @@ public class ChatRoomRepositoryCustomImpl implements ChatRoomRepositoryCustom {
                 .select(chatMember.member)
                 .from(chatMember)
                 .join(chatMember.chatRoom)
-                .where(chatMember.chatRoom.id.eq(chatRoomId))
+                .where(chatMember.chatRoom.id.eq(chatRoomId)
+                        .and(chatMember.deletedAt.isNull()))
                 .fetch();
     }
 

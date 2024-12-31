@@ -134,6 +134,9 @@ public class ChatCommandService {
         if (chatMember == null) {
             throw new RuntimeException("참여자가 아닙니다.");
         }
+        if (Objects.equals(leaveMember.getId(), chatRoom.getMember().getId())) {
+            throw new RuntimeException("개설자는 채팅룸을 삭제해야 나갈 수 있습니다.");
+        }
 
         chatMember.deleteChatMember();
         chatMemberRepository.save(chatMember);
@@ -149,11 +152,15 @@ public class ChatCommandService {
             throw new RuntimeException("삭제 권한이 없습니다.");
         }
 
+        long activeMemberCount = chatMemberRepository.countByChatRoomAndDeletedAtIsNull(chatRoom);
+        if (activeMemberCount != 1 || chatMember.getDeletedAt() != null) {
+            throw new RuntimeException("삭제할 수 없는 조건입니다.");
+        }
+
         chatMember.deleteChatMember();
         chatRoom.deleteChatRoom();
         chatMemberRepository.save(chatMember);
         chatRoomRepository.save(chatRoom);
-
     }
 
 //
