@@ -1,6 +1,8 @@
 package flab.Linkedlog.dto.post;
 
 import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PositiveOrZero;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -16,10 +18,10 @@ import java.util.List;
 public class PostDetailResponse {
 
 
-    @NotEmpty(message = "글 아이디")
+    @NotNull(message = "글 아이디")
     private Long id;
 
-    @NotEmpty(message = "카테고리 아이디")
+    @NotNull(message = "카테고리 아이디")
     private Long categoryId;
 
     @NotEmpty(message = "작성자")
@@ -31,13 +33,13 @@ public class PostDetailResponse {
     @NotEmpty(message = "글 내용")
     private String content;
 
-    @NotEmpty(message = "작성일")
+    @NotNull(message = "작성일")
     private LocalDateTime createdAt;
 
-    @NotEmpty(message = "조회수")
+    @PositiveOrZero(message = "조회수")
     private int viewes;
 
-    @NotEmpty(message = "유료 금액")
+    @PositiveOrZero(message = "유료 금액")
     private BigDecimal price;
 
     private List<String> images;

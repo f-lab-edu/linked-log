@@ -11,13 +11,19 @@ import flab.Linkedlog.repository.postImage.PostImageRepository;
 import jakarta.persistence.EntityNotFoundException;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.Collections;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 @Service
@@ -31,19 +37,14 @@ public class PostService {
     private final flab.Linkedlog.repository.post.PostRepository postRepository;
     private final S3Service s3Service;
 
+    @Value("${aws.s3.bucket}")
+    private String bucketName;
+
+    @Value("${post-image.default-folder-path}")
+    private String folderName;
 
     // 글 등록
     public Long createPost(CreatePostRequest createPostRequest, Long categoryId, Long memberId, List<MultipartFile> images) throws IOException {
-
-        if (createPostRequest.getTitle() == null || createPostRequest.getTitle().isBlank()) {
-            throw new IllegalArgumentException();
-        }
-        if (createPostRequest.getContent() == null || createPostRequest.getContent().isBlank()) {
-            throw new IllegalArgumentException();
-        }
-        if (images != null && images.size() > 20) {
-            throw new IllegalArgumentException();
-        }
 
         Post post = Post.builder()
                 .member(memberRepository.findById(memberId).orElseThrow(EntityNotFoundException::new))
@@ -55,50 +56,30 @@ public class PostService {
         postRepository.save(post);
 
         if (images != null && !images.isEmpty()) {
-            List<PostImage> postImages = new ArrayList<>();
+            List<CompletableFuture<PostImage>> futureList = new ArrayList<>();
+
             for (MultipartFile image : images) {
                 if (!image.isEmpty()) {
-                    String imageUrl = s3Service.uploadFile(image);
-                    PostImage postImage = PostImage.builder()
-                            .post(post)
-                            .imageUrl(imageUrl)
-                            .build();
-                    postImages.add(postImage);
+                    CompletableFuture<PostImage> uploadFuture = uploadPostImageAsync(image, post);
+                    futureList.add(uploadFuture);
                 }
             }
+            List<PostImage> postImages = futureList.stream()
+                    .map(CompletableFuture::join)
+                    .collect(Collectors.toList());
+
             postImageRepository.saveAll(postImages);
         }
 
         return post.getId();
     }
-    
+
     // 글 조회 1: 특정 카테고리의 글들을 날짜 내림차순으로 출력
     @Transactional(readOnly = true)
-    public List<PostListResponse> getPostsByCategory(Long categoryId) {
-        return postRepository.findPostListInCategory(categoryId).stream()
-                .map(post -> {
+    public PageImpl<PostListResponse> getPostsByCategory(Long categoryId, Pageable pageable) {
+        PageImpl<Post> postsPage = postRepository.findPostListInCategory(categoryId, pageable);
 
-                    // PostListDto 생성
-                    return new PostListResponse(
-                            post.getId(),
-                            post.getTitle(),
-                            post.getContent(),
-                            post.getCreatedAt(),
-                            post.getCategory().getName(),
-                            post.getMember().getNickName(),
-                            post.getViews(),
-                            post.getPrice()
-                    );
-                })
-                .collect(Collectors.toList());
-    }
-
-
-    // 글 조회 2: 특정 카테고리의 글 중 제목 또는 내용에 특정 문자열 포함된 글을 출력
-    @Transactional(readOnly = true)
-    public List<PostListResponse> searchPostsByCategoryAndKeyword(Long categoryId, String keyword) {
-
-        return postRepository.findPostListInCategoryContainKeyword(categoryId, keyword).stream()
+        List<PostListResponse> postListResponses = postsPage.getContent().stream()
                 .map(post -> new PostListResponse(
                         post.getId(),
                         post.getTitle(),
@@ -110,6 +91,34 @@ public class PostService {
                         post.getPrice()
                 ))
                 .collect(Collectors.toList());
+
+        return new PageImpl<>(postListResponses, pageable, postsPage.getTotalElements());
+    }
+
+
+    // 글 조회 2: 특정 카테고리의 글 중 제목 또는 내용에 특정 문자열 포함된 글을 출력
+    @Transactional(readOnly = true)
+    public PageImpl<PostListResponse> searchPostsByCategoryAndKeyword(Long categoryId, String keyword, Pageable pageable) {
+        PageImpl<Post> postsPage = postRepository.findPostListInCategoryContainKeyword(categoryId, keyword, pageable);
+
+        if (postsPage.isEmpty()) {
+            return new PageImpl<>(Collections.emptyList(), pageable, 0);
+        }
+
+        List<PostListResponse> postListResponses = postsPage.getContent().stream()
+                .map(post -> new PostListResponse(
+                        post.getId(),
+                        post.getTitle(),
+                        post.getContent(),
+                        post.getCreatedAt(),
+                        post.getCategory().getName(),
+                        post.getMember().getNickName(),
+                        post.getViews(),
+                        post.getPrice()
+                ))
+                .collect(Collectors.toList());
+
+        return new PageImpl<>(postListResponses, pageable, postsPage.getTotalElements());
     }
 
     // 글 상세
@@ -140,5 +149,15 @@ public class PostService {
                 post.getPrice(),
                 imageUrls
         );
+    }
+
+    @Async
+    public CompletableFuture<PostImage> uploadPostImageAsync(MultipartFile image, Post post) throws IOException {
+        String imageUrl = s3Service.uploadFile(image, bucketName, folderName);
+        PostImage postImage = PostImage.builder()
+                .post(post)
+                .imageUrl(imageUrl)
+                .build();
+        return CompletableFuture.completedFuture(postImage);
     }
 }

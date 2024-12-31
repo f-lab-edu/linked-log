@@ -3,6 +3,7 @@ package flab.Linkedlog.postTest;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import flab.Linkedlog.controller.response.ApiResponse;
+import flab.Linkedlog.controller.response.RestPageImpl;
 import flab.Linkedlog.dto.post.PostListResponse;
 import flab.Linkedlog.entity.Category;
 import flab.Linkedlog.entity.Member;
@@ -20,10 +21,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.Page;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -117,19 +117,24 @@ public class PostSearchTests {
         // When
         String responseContent = mockMvc.perform(get("/posts/category/{categoryId}/search", categoryId)
                         .param("keyword", keyword)
-                        .header("Authorization", "Bearer " + token))
+                        .header("Authorization", "Bearer " + token)
+                        .param("page", "0")
+                        .param("size", "5"))
+                .andExpect(status().isOk())
                 .andReturn()
                 .getResponse()
                 .getContentAsString();
 
-        ApiResponse<List<PostListResponse>> response = objectMapper.readValue(responseContent,
+        ApiResponse<RestPageImpl<PostListResponse>> response = objectMapper.readValue(responseContent,
                 new TypeReference<>() {
                 });
 
+        Page<PostListResponse> postsPage = response.getResponse();
+
         // Then
-        assertThat(response.getResponse()).hasSize(2);
-        assertThat(response.getResponse().get(0).getContent()).isEqualTo("파이썬 개요");
-        assertThat(response.getResponse().get(1).getContent()).isEqualTo("C언어 메모리");
+        assertThat(postsPage.getContent()).hasSize(2);
+        assertThat(postsPage.getContent().get(0).getContent()).isEqualTo("파이썬 개요");
+        assertThat(postsPage.getContent().get(1).getContent()).isEqualTo("C언어 메모리");
 
     }
 
@@ -144,19 +149,25 @@ public class PostSearchTests {
         // When
         String responseContent = mockMvc.perform(get("/posts/category/{categoryId}/search", categoryId)
                         .param("keyword", keyword)
-                        .header("Authorization", "Bearer " + token))
+                        .header("Authorization", "Bearer " + token)
+                        .param("page", "0")
+                        .param("size", "5"))
+                .andExpect(status().isOk())
                 .andReturn()
                 .getResponse()
                 .getContentAsString();
 
-        ApiResponse<List<PostListResponse>> response = objectMapper.readValue(responseContent,
+        ApiResponse<RestPageImpl<PostListResponse>> response = objectMapper.readValue(responseContent,
                 new TypeReference<>() {
                 });
 
+        Page<PostListResponse> postsPage = response.getResponse();
+
         // Then
-        assertThat(response.getResponse()).hasSize(2);
-        assertThat(response.getResponse().get(0).getTitle()).isEqualTo("파이썬 7강");
-        assertThat(response.getResponse().get(1).getTitle()).isEqualTo("자바 5강");
+        assertThat(postsPage.getContent()).hasSize(2);
+        assertThat(postsPage.getContent().get(0).getTitle()).isEqualTo("파이썬 7강");
+        assertThat(postsPage.getContent().get(1).getTitle()).isEqualTo("자바 5강");
+
     }
 
     @Test
@@ -170,16 +181,22 @@ public class PostSearchTests {
         // When
         String responseContent = mockMvc.perform(get("/posts/category/{categoryId}/search", categoryId)
                         .param("keyword", keyword)
-                        .header("Authorization", "Bearer " + token))
+                        .header("Authorization", "Bearer " + token)
+                        .param("page", "0")
+                        .param("size", "5"))
+                .andExpect(status().isOk())
                 .andReturn()
                 .getResponse()
                 .getContentAsString();
 
-        ApiResponse<List<PostListResponse>> response = objectMapper.readValue(responseContent,
+        ApiResponse<RestPageImpl<PostListResponse>> response = objectMapper.readValue(responseContent,
                 new TypeReference<>() {
                 });
+
+        Page<PostListResponse> postsPage = response.getResponse();
+
         // Then
-        assertThat(response.getResponse()).hasSize(0);
+        assertThat(postsPage).hasSize(0);
     }
 
 
@@ -194,7 +211,9 @@ public class PostSearchTests {
         // When & Then
         mockMvc.perform(get("/posts/category/{categoryId}/search", categoryId)
                         .param("keyword", keyword)
-                        .header("Authorization", "Bearer " + token))
+                        .header("Authorization", "Bearer " + token)
+                        .param("page", "0")
+                        .param("size", "5"))
                 .andExpect(status().isBadRequest());
     }
 }

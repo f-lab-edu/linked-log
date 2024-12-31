@@ -11,6 +11,7 @@ import flab.Linkedlog.service.S3Service;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
@@ -25,6 +26,7 @@ import java.nio.charset.StandardCharsets;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
 @Transactional
@@ -45,6 +47,9 @@ public class SignUpIntegrationTests {
 
     @Autowired
     private S3Service s3Service;
+
+    @Value("${aws.s3.bucket}")
+    private String bucketName;
 
 
     @Test
@@ -140,12 +145,12 @@ public class SignUpIntegrationTests {
                         .file("profileImage", new byte[0])
                         .file(signUpRequestPart)
                         .contentType(MediaType.MULTIPART_FORM_DATA))
+                .andExpect(status().isOk())
                 .andReturn();
 
         String initialResponseContent = initialResult.getResponse().getContentAsString();
         ApiResponse initialResponse = objectMapper.readValue(initialResponseContent, ApiResponse.class);
 
-        assertThat(initialResult.getResponse().getStatus()).isEqualTo(200);
         assertThat(initialResponse.getResponse()).isEqualTo("member01");
 
         SignUpRequest duplicateSignUpRequest = SignUpRequest.builder()
@@ -173,12 +178,12 @@ public class SignUpIntegrationTests {
                         .file("profileImage", new byte[0])
                         .file(duplicateSignUpRequestPart)
                         .contentType(MediaType.MULTIPART_FORM_DATA))
+                .andExpect(status().isInternalServerError())
                 .andReturn();
 
         String duplicateResponseContent = duplicateResult.getResponse().getContentAsString();
         ApiResponse duplicateResponse = objectMapper.readValue(duplicateResponseContent, ApiResponse.class);
 
-        assertThat(duplicateResult.getResponse().getStatus()).isEqualTo(500);
         assertThat(duplicateResponse.getError()).isEqualTo("INVALID_STATE");
 
         Member existingMember = memberRepository.findByUserId("member01")
@@ -224,16 +229,14 @@ public class SignUpIntegrationTests {
                         .file("profileImage", profileImage.getBytes())
                         .file(signUpRequestPart)
                         .contentType(MediaType.MULTIPART_FORM_DATA))
+                .andExpect(status().isOk())
                 .andReturn();
 
         // Then
         String jsonResponse = result.getResponse().getContentAsString();
         ApiResponse response = objectMapper.readValue(jsonResponse, ApiResponse.class);
 
-
-        assertThat(result.getResponse().getStatus()).isEqualTo(200);
         assertThat(response.getResponse()).isNotNull();
-
 
         Member member = memberRepository.findByUserId("testUser").orElseThrow(() -> new RuntimeException("회원이 존재하지 않습니다"));
 
@@ -246,10 +249,10 @@ public class SignUpIntegrationTests {
         String profileImageUrl = member.getProfileImage();
         String profileImageKey = profileImageUrl.substring(profileImageUrl.lastIndexOf("/") + 1);
 
-        String s3Url = s3Service.getFileUrl(profileImageKey);
+        String s3Url = s3Service.getFileUrl(profileImageKey, bucketName);
         assertThat(s3Url).contains(profileImageKey);
 
-        s3Service.deleteFile(profileImageKey);
+        s3Service.deleteFile(profileImageKey, bucketName);
 
     }
 

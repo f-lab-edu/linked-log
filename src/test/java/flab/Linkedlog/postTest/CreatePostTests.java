@@ -67,9 +67,12 @@ public class CreatePostTests {
     private S3Service s3Service;
 
     private Long testMemberId;
+
+    @Value("${aws.s3.bucket}")
+    private String bucketName;
+
     @Value("${profile.default-image-url}")
     private String defaultProfileImage;
-
 
     @BeforeEach
     void setUp() {
@@ -295,11 +298,11 @@ public class CreatePostTests {
         String uploadedImageUrl = postImages.get(0).getImageUrl();
 
         String s3Key = uploadedImageUrl.substring(uploadedImageUrl.lastIndexOf("/") + 1);
-        String s3Url = s3Service.getFileUrl(s3Key);
+        String s3Url = s3Service.getFileUrl(s3Key, bucketName);
 
         assertThat(s3Url).contains(s3Key);
 
-        s3Service.deleteFile(s3Key);
+        s3Service.deleteFile(s3Key, bucketName);
 
     }
 
@@ -374,10 +377,10 @@ public class CreatePostTests {
         for (int i = 0; i < numberOfImages; i++) {
             String uploadedImageUrl = postImages.get(i).getImageUrl();
             String s3Key = uploadedImageUrl.substring(uploadedImageUrl.lastIndexOf("/") + 1);
-            String s3Url = s3Service.getFileUrl(s3Key);
+            String s3Url = s3Service.getFileUrl(s3Key, bucketName);
             assertThat(s3Url).contains(s3Key);
 
-            s3Service.deleteFile(s3Key);
+            s3Service.deleteFile(s3Key, bucketName);
         }
     }
 
