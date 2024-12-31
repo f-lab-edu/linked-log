@@ -12,7 +12,6 @@ import flab.Linkedlog.entity.enums.MemberGrade;
 import flab.Linkedlog.repository.MemberRepository;
 import flab.Linkedlog.repository.chat.ChatMemberRepository;
 import flab.Linkedlog.repository.chat.ChatRoomRepository;
-import flab.Linkedlog.util.JwtUtil;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -27,7 +26,6 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -55,11 +53,6 @@ public class ChatRoomListTests {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
-
-    private Long creatorId;
-    private Long participantId;
-    private Long chatRoomId;
-    private String participantToken;
 
     @Value("${profile.default-image-url}")
     private String defaultProfileImage;

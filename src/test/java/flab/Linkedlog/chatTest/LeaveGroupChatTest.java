@@ -25,7 +25,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.text.MessageFormat;
 import java.util.List;
 import java.util.Optional;
 import java.util.logging.Logger;
@@ -59,9 +58,6 @@ public class LeaveGroupChatTest {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
-
-    private static final Logger logger = Logger.getLogger(LeaveGroupChatTest.class.getName());
-
 
     private Long creatorId;
     private Long participant1Id;

@@ -31,7 +31,6 @@ public class ChatRoomRepositoryCustomImpl implements ChatRoomRepositoryCustom {
     @Override
     public List<Member> findChatRoomMembers(Long chatRoomId) {
 
-        QMember member = QMember.member;
         QChatMember chatMember = QChatMember.chatMember;
 
         return queryFactory
