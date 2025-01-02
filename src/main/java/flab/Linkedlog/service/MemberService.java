@@ -73,7 +73,7 @@ public class MemberService {
             };
         }
 
-        return jwtUtil.generateToken(member.getUserId(), member.getMemberGrade());
+        return jwtUtil.generateToken(member.getUserId(), member.getMemberGrade(), member.getId());
     }
 
 

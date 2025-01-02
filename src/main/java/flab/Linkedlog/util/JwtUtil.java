@@ -35,7 +35,7 @@ public class JwtUtil {
         TimeZone.setDefault(TimeZone.getTimeZone("Asia/Seoul"));
     }
 
-    public String generateToken(String username, MemberGrade roles) {
+    public String generateToken(String username, MemberGrade roles, Long memberId) {
 
         ZonedDateTime now = ZonedDateTime.now(ZoneId.of("Asia/Seoul"));
         Duration expirationDuration = Duration.ofMillis(jwtProperties.getExpirationTime());
@@ -45,6 +45,7 @@ public class JwtUtil {
 
         return Jwts.builder()
                 .setSubject(username)
+                .claim("memberId", memberId)
                 .claim("roles", roles)
                 .setIssuedAt(issuedAt)
                 .setExpiration(expiration)
@@ -73,6 +74,18 @@ public class JwtUtil {
                 .build()
                 .parseClaimsJws(token)
                 .getBody();
+    }
+
+    public Long getMemberIdFromToken(String token) {
+        Claims claims = getClaimsFromToken(token);
+        Object memberIdObj = claims.get("memberId");
+
+        if (memberIdObj instanceof Number) {
+            return ((Number) memberIdObj).longValue();
+        } else if (memberIdObj instanceof String) {
+            return Long.parseLong((String) memberIdObj);
+        }
+        throw new IllegalArgumentException("Invalid memberId type in token");
     }
 
 }

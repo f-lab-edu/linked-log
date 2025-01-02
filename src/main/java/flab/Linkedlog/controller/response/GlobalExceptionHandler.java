@@ -1,9 +1,13 @@
 package flab.Linkedlog.controller.response;
 
+import jakarta.persistence.EntityNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -25,6 +29,7 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ApiResponse<ErrorResponse> handleIllegalArgumentException(IllegalArgumentException e) {
         logger.error("잘못된 요청: {}", e.getMessage(), e);
 
@@ -79,4 +84,24 @@ public class GlobalExceptionHandler {
 
         return ApiResponse.error("UNAUTHORIZED", e.getMessage());
     }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST) // 400 상태 코드 반환
+    public ApiResponse<ErrorResponse> handleMethodArgumentNotValidException(MethodArgumentNotValidException e) {
+        FieldError fieldError = e.getBindingResult().getFieldError();
+        String errorMessage = (fieldError != null) ? fieldError.getDefaultMessage() : "Validation failed";
+
+        logger.error("유효성 검사 실패: {}", errorMessage, e);
+
+        return ApiResponse.error("VALIDATION_FAILED", errorMessage);
+    }
+
+    @ExceptionHandler(EntityNotFoundException.class)
+    public ResponseEntity<ApiResponse<ErrorResponse>> handleEntityNotFound(EntityNotFoundException e) {
+        logger.error("존재하지 않음: {}", e.getMessage(), e);
+
+        ApiResponse<ErrorResponse> errorResponse = ApiResponse.error("NOT_FOUND", e.getMessage());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
+    }
+
 }
