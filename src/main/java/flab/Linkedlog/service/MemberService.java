@@ -7,7 +7,6 @@ import flab.Linkedlog.repository.MemberRepository;
 import flab.Linkedlog.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -26,7 +25,7 @@ public class MemberService {
     private final MemberRepository memberRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
-    private final S3Service s3Service;
+    private final ImageUploadService imageUploadService;
 
     @Value("${profile.default-image-url}")
     private String defaultProfileImage;
@@ -61,11 +60,16 @@ public class MemberService {
         memberRepository.save(member);
 
         if (profileImage != null && !profileImage.isEmpty()) {
-            CompletableFuture<Void> uploadFuture = uploadProfileImageAsync(profileImage, member);
-            uploadFuture.thenRun(() -> {
+            // async
+            CompletableFuture<String> uploadFuture = imageUploadService.uploadProfileImageAsync(profileImage);
+            uploadFuture.thenAccept(imageUrl -> {
+                member.storeProfileImage(imageUrl);
                 memberRepository.save(member);
+            }).exceptionally(e -> {
+                throw new RuntimeException();
             });
         }
+
         return member.getId();
     }
 
@@ -112,13 +116,6 @@ public class MemberService {
 //        ));
 //    }
 
-
-    @Async
-    public CompletableFuture<Void> uploadProfileImageAsync(MultipartFile profileImage, Member member) throws IOException {
-        String imageKey = s3Service.uploadFile(profileImage, bucketName, defaultProfilepath);
-        member.storeProfileImage(imageKey);
-        return CompletableFuture.completedFuture(null);
-    }
 
 }
 

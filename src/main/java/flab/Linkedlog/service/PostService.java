@@ -14,7 +14,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -35,7 +34,7 @@ public class PostService {
     private final MemberRepository memberRepository;
     private final PostImageRepository postImageRepository;
     private final flab.Linkedlog.repository.post.PostRepository postRepository;
-    private final S3Service s3Service;
+    private final ImageUploadService imageUploadService;
 
     @Value("${aws.s3.bucket}")
     private String bucketName;
@@ -56,16 +55,25 @@ public class PostService {
         postRepository.save(post);
 
         if (images != null && !images.isEmpty()) {
-            List<CompletableFuture<PostImage>> futureList = new ArrayList<>();
+            List<CompletableFuture<String>> futureList = new ArrayList<>();
 
             for (MultipartFile image : images) {
                 if (!image.isEmpty()) {
-                    CompletableFuture<PostImage> uploadFuture = uploadPostImageAsync(image, post);
+                    // async
+                    CompletableFuture<String> uploadFuture = imageUploadService.uploadPostImageAsync(image);
                     futureList.add(uploadFuture);
                 }
             }
-            List<PostImage> postImages = futureList.stream()
+
+            List<String> imageUrls = futureList.stream()
                     .map(CompletableFuture::join)
+                    .toList();
+
+            List<PostImage> postImages = imageUrls.stream()
+                    .map(url -> PostImage.builder()
+                            .post(post)
+                            .imageUrl(url)
+                            .build())
                     .collect(Collectors.toList());
 
             postImageRepository.saveAll(postImages);
@@ -151,13 +159,4 @@ public class PostService {
         );
     }
 
-    @Async
-    public CompletableFuture<PostImage> uploadPostImageAsync(MultipartFile image, Post post) throws IOException {
-        String imageUrl = s3Service.uploadFile(image, bucketName, folderName);
-        PostImage postImage = PostImage.builder()
-                .post(post)
-                .imageUrl(imageUrl)
-                .build();
-        return CompletableFuture.completedFuture(postImage);
-    }
 }
