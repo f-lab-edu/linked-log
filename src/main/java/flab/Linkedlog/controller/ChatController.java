@@ -29,11 +29,8 @@ public class ChatController {
     @PostMapping(value = "/create/group")
     @PreAuthorize("isAuthenticated()")
     public ApiResponse<Long> createGroupChatRoom(
-            @Valid @RequestBody ChatRoomCreateRequest chatRoomCreateRequest) {
-        CustomUserDetails userDetails = (CustomUserDetails) SecurityContextHolder.
-                getContext().
-                getAuthentication().
-                getPrincipal();
+            @Valid @RequestBody ChatRoomCreateRequest chatRoomCreateRequest,
+            CustomUserDetails userDetails) {
         Long memberId = userDetails.getMemberId();
 
         Long chatRoomId = chatCommandService.createGroupChatRoom(chatRoomCreateRequest, memberId);
@@ -61,11 +58,8 @@ public class ChatController {
     @PostMapping(value = "/join/{chatRoomId}")
     @PreAuthorize("isAuthenticated()")
     public ApiResponse<Long> joinChatRoom(@PathVariable Long chatRoomId,
-                                          @RequestParam(required = false) String password) {
-        CustomUserDetails userDetails = (CustomUserDetails) SecurityContextHolder.
-                getContext().
-                getAuthentication().
-                getPrincipal();
+                                          @RequestParam(required = false) String password,
+                                          CustomUserDetails userDetails) {
         Long memberId = userDetails.getMemberId();
 
         Long joinMemberId = chatCommandService.joinChatRoom(chatRoomId, memberId, password);
@@ -111,11 +105,8 @@ public class ChatController {
     // 채팅방 삭제
     @PostMapping(value = "/chatroom/{chatRoomId}/delete")
     @PreAuthorize("isAuthenticated()")
-    public ApiResponse<Long> deleteChatRoom(@PathVariable Long chatRoomId) {
-        CustomUserDetails userDetails = (CustomUserDetails) SecurityContextHolder.
-                getContext().
-                getAuthentication().
-                getPrincipal();
+    public ApiResponse<Long> deleteChatRoom(@PathVariable Long chatRoomId,
+                                            CustomUserDetails userDetails) {
         Long manageMemberId = userDetails.getMemberId();
 
         chatCommandService.deleteChatRoom(chatRoomId, manageMemberId);
@@ -147,5 +138,5 @@ public class ChatController {
         return ApiResponse.success(chatRoomDetailResponse);
     }
 
- 
+    // 채팅방 상세
 }

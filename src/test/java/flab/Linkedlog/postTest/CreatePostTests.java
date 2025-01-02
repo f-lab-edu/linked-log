@@ -327,14 +327,17 @@ public class CreatePostTests {
         );
 
         int numberOfImages = 5;
+        int fileSizeInMB = 5;
 
         List<MockMultipartFile> imageFiles = new ArrayList<>();
         for (int i = 1; i <= numberOfImages; i++) {
+            byte[] dummyImageContent = new byte[fileSizeInMB * 1024 * 1024];
             MockMultipartFile imageFile = new MockMultipartFile(
                     "images",
                     "test-image-" + i + ".jpg",
                     "image/jpeg",
-                    ("dummy image content " + i).getBytes()
+                    dummyImageContent
+                    //("dummy image content " + i).getBytes()
             );
             imageFiles.add(imageFile);
         }
