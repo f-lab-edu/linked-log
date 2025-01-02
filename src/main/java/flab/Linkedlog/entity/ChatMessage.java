@@ -1,5 +1,6 @@
 package flab.Linkedlog.entity;
 
+import flab.Linkedlog.entity.enums.ChatMessageType;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -9,7 +10,7 @@ import lombok.NoArgsConstructor;
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class ChatMessage {
+public class ChatMessage extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -26,11 +27,16 @@ public class ChatMessage {
     @Column(nullable = false)
     private String message;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private ChatMessageType chatMessageType = ChatMessageType.SEND;
+
     @Builder
-    public ChatMessage(ChatRoom chatRoom, Member sender, String message) {
+    public ChatMessage(ChatRoom chatRoom, Member sender, String message, ChatMessageType chatMessageType) {
         this.chatRoom = chatRoom;
         this.sender = sender;
         this.message = message;
+        this.chatMessageType = chatMessageType;
     }
 }
 

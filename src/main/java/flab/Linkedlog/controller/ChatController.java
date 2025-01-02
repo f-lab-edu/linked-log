@@ -2,13 +2,13 @@ package flab.Linkedlog.controller;
 
 import flab.Linkedlog.config.CustomUserDetails;
 import flab.Linkedlog.controller.response.ApiResponse;
-import flab.Linkedlog.dto.chat.ChatRoomCreateRequest;
-import flab.Linkedlog.dto.chat.ChatRoomListResponse;
-import flab.Linkedlog.dto.chat.ChatRoomMemberListResponse;
+import flab.Linkedlog.dto.chat.*;
 import flab.Linkedlog.service.chatService.ChatCommandService;
 import flab.Linkedlog.service.chatService.ChatQueryService;
+import flab.Linkedlog.util.JwtUtil;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
@@ -22,7 +22,8 @@ public class ChatController {
 
     private final ChatCommandService chatCommandService;
     private final ChatQueryService chatQueryService;
-
+    private final SimpMessagingTemplate messagingTemplate;
+    private final JwtUtil jwtUtil;
 
     // 단체 채팅방 개설
     @PostMapping(value = "/create/group")
@@ -40,23 +41,23 @@ public class ChatController {
     }
 
 
-//    // 1:1 채팅방 개설
-//    @PostMapping(value = "/create/personal/{receiverId}")
-//    @PreAuthorize("isAuthenticated()")
-//    public ApiResponse<Long> createPersonalChatRoom(
-//            @Valid @RequestBody ChatRoomCreateRequest chatRoomCreateRequest,
-//            @PathVariable Long receiverId) {
-//        CustomUserDetails userDetails = (CustomUserDetails) SecurityContextHolder.
-//                getContext().
-//                getAuthentication().
-//                getPrincipal();
-//        Long myId = userDetails.getMemberId();
-//
-//        Long chatRoomId = chatCommandService.createPersonalChatRoom(chatRoomCreateRequest, myId, receiverId);
-//        return ApiResponse.success(chatRoomId);
-//    }
+    // 1:1 채팅방 개설
+    @PostMapping(value = "/create/personal/{receiverId}")
+    @PreAuthorize("isAuthenticated()")
+    public ApiResponse<Long> createPersonalChatRoom(
+            @Valid @RequestBody ChatRoomCreateRequest chatRoomCreateRequest,
+            @PathVariable Long receiverId) {
+        CustomUserDetails userDetails = (CustomUserDetails) SecurityContextHolder.
+                getContext().
+                getAuthentication().
+                getPrincipal();
+        Long myId = userDetails.getMemberId();
 
-    // 채팅방 참여
+        Long chatRoomId = chatCommandService.createPersonalChatRoom(chatRoomCreateRequest, myId, receiverId);
+        return ApiResponse.success(chatRoomId);
+    }
+
+    // 채팅방 참여(depreciated)
     @PostMapping(value = "/join/{chatRoomId}")
     @PreAuthorize("isAuthenticated()")
     public ApiResponse<Long> joinChatRoom(@PathVariable Long chatRoomId,
@@ -71,34 +72,39 @@ public class ChatController {
         return ApiResponse.success(joinMemberId);
     }
 
-//    // 방장 위임
-//    @PostMapping(value = "/chatroom/{chatRoomId}/delegate/{memberId}")
-//    @PreAuthorize("isAuthenticated()")
-//    public ApiResponse<Long> delegateChatRoomManager(
-//            @PathVariable Long chatRoomId,
-//            @PathVariable Long memberId) {
-//        CustomUserDetails userDetails = (CustomUserDetails) SecurityContextHolder.
-//                getContext().
-//                getAuthentication().
-//                getPrincipal();
-//        Long manageMemberId = userDetails.getMemberId();
-//
-//        chatCommandService.delegateChatRoomManager(chatRoomId, manageMemberId, memberId);
-//        return ApiResponse.success(memberId);
-//    }
+
+    // 방장 위임
+    @PostMapping(value = "/chatroom/{chatRoomId}/delegate/{memberId}")
+    @PreAuthorize("isAuthenticated()")
+    public ApiResponse<Long> delegateChatRoomManager(
+            @PathVariable Long chatRoomId,
+            @PathVariable Long memberId) {
+        CustomUserDetails userDetails = (CustomUserDetails) SecurityContextHolder.
+                getContext().
+                getAuthentication().
+                getPrincipal();
+        Long manageMemberId = userDetails.getMemberId();
+
+        chatCommandService.delegateChatRoomManager(chatRoomId, manageMemberId, memberId);
+        return ApiResponse.success(memberId);
+    }
 
     // 채팅방 퇴장
     @PostMapping(value = "/chatroom/{chatRoomId}/leave")
     @PreAuthorize("isAuthenticated()")
     public ApiResponse<Long> leaveChatRoom(
-            @PathVariable Long chatRoomId) {
+            @PathVariable Long chatRoomId,
+            @RequestHeader("Authorization") String token) {
         CustomUserDetails userDetails = (CustomUserDetails) SecurityContextHolder.
                 getContext().
                 getAuthentication().
                 getPrincipal();
         Long leaveMemberId = userDetails.getMemberId();
 
-        chatCommandService.leaveChatRoom(chatRoomId, leaveMemberId);
+        chatCommandService.leaveChatRoom(chatRoomId, leaveMemberId, token);
+        //messagingTemplate.convertAndSend("/app/chat.leave/" + chatRoomId, leaveMemberId); // handleLeave 호출
+
+
         return ApiResponse.success(leaveMemberId);
     }
 
@@ -132,6 +138,14 @@ public class ChatController {
         return ApiResponse.success(members);
     }
 
+    // 접속중인 채팅방 상세
+    @GetMapping("/chatroom/{chatRoomId}/info")
+    @PreAuthorize("isAuthenticated()")
+    public ApiResponse<ChatRoomDetailResponse> getChatRoomInfo(
+            @PathVariable Long chatRoomId) {
+        ChatRoomDetailResponse chatRoomDetailResponse = chatQueryService.getChatRoomDetail(chatRoomId, null);
+        return ApiResponse.success(chatRoomDetailResponse);
+    }
 
-    // 채팅방 상세
+ 
 }
