@@ -8,9 +8,10 @@ import flab.Linkedlog.service.chatService.ChatQueryService;
 import flab.Linkedlog.util.JwtUtil;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -24,6 +25,7 @@ public class ChatController {
     private final ChatQueryService chatQueryService;
     private final SimpMessagingTemplate messagingTemplate;
     private final JwtUtil jwtUtil;
+    Logger logger = LoggerFactory.getLogger(ChatController.class);
 
     // 단체 채팅방 개설
     @PostMapping(value = "/create/group")
@@ -37,68 +39,70 @@ public class ChatController {
         return ApiResponse.success(chatRoomId);
     }
 
+//
+//    // 1:1 채팅방 개설
+//    @PostMapping(value = "/create/personal/{receiverId}")
+//    @PreAuthorize("isAuthenticated()")
+//    public ApiResponse<Long> createPersonalChatRoom(
+//            @Valid @RequestBody ChatRoomCreateRequest chatRoomCreateRequest,
+//            @PathVariable Long receiverId,
+//            CustomUserDetails userDetails) {
+//        Long myId = userDetails.getMemberId();
+//
+//        Long chatRoomId = chatCommandService.createPersonalChatRoom(chatRoomCreateRequest, myId, receiverId);
+//        return ApiResponse.success(chatRoomId);
+//    }
+//
+//    // 채팅방 참여(depreciated)
+//    @PostMapping(value = "/join/{chatRoomId}")
+//    @PreAuthorize("isAuthenticated()")
+//    public ApiResponse<Long> joinChatRoom(@PathVariable Long chatRoomId,
+//                                          @RequestParam(required = false) String password,
+//                                          CustomUserDetails userDetails) {
+//        Long memberId = userDetails.getMemberId();
+//
+//        Long joinMemberId = chatCommandService.joinChatRoom(chatRoomId, memberId, password);
+//        return ApiResponse.success(joinMemberId);
+//    }
 
-    // 1:1 채팅방 개설
-    @PostMapping(value = "/create/personal/{receiverId}")
+
+    //채팅방 접속
+    @PostMapping("/chat.connect/{chatRoomId}")
     @PreAuthorize("isAuthenticated()")
-    public ApiResponse<Long> createPersonalChatRoom(
-            @Valid @RequestBody ChatRoomCreateRequest chatRoomCreateRequest,
-            @PathVariable Long receiverId) {
-        CustomUserDetails userDetails = (CustomUserDetails) SecurityContextHolder.
-                getContext().
-                getAuthentication().
-                getPrincipal();
-        Long myId = userDetails.getMemberId();
-
-        Long chatRoomId = chatCommandService.createPersonalChatRoom(chatRoomCreateRequest, myId, receiverId);
-        return ApiResponse.success(chatRoomId);
-    }
-
-    // 채팅방 참여(depreciated)
-    @PostMapping(value = "/join/{chatRoomId}")
-    @PreAuthorize("isAuthenticated()")
-    public ApiResponse<Long> joinChatRoom(@PathVariable Long chatRoomId,
-                                          @RequestParam(required = false) String password,
-                                          CustomUserDetails userDetails) {
-        Long memberId = userDetails.getMemberId();
-
-        Long joinMemberId = chatCommandService.joinChatRoom(chatRoomId, memberId, password);
-        return ApiResponse.success(joinMemberId);
-    }
-
-
-    // 방장 위임
-    @PostMapping(value = "/chatroom/{chatRoomId}/delegate/{memberId}")
-    @PreAuthorize("isAuthenticated()")
-    public ApiResponse<Long> delegateChatRoomManager(
+    public ApiResponse<ChatMessageConnectResponse> connectToChatRoom(
             @PathVariable Long chatRoomId,
-            @PathVariable Long memberId) {
-        CustomUserDetails userDetails = (CustomUserDetails) SecurityContextHolder.
-                getContext().
-                getAuthentication().
-                getPrincipal();
-        Long manageMemberId = userDetails.getMemberId();
+            @RequestBody ChatRoomPasswordRequest request,
+            @RequestHeader("Authorization") String token) {
 
-        chatCommandService.delegateChatRoomManager(chatRoomId, manageMemberId, memberId);
-        return ApiResponse.success(memberId);
+        ChatMessageConnectResponse response = chatCommandService.connectToChatRoom(chatRoomId, request.getPassword(), token);
+        return ApiResponse.success(response);
     }
+
+
+//    // 방장 위임
+//    @PostMapping(value = "/chatroom/{chatRoomId}/delegate/{memberId}")
+//    @PreAuthorize("isAuthenticated()")
+//    public ApiResponse<Long> delegateChatRoomManager(
+//            @PathVariable Long chatRoomId,
+//            @PathVariable Long memberId,
+//            CustomUserDetails userDetails) {
+//        Long manageMemberId = userDetails.getMemberId();
+//
+//        chatCommandService.delegateChatRoomManager(chatRoomId, manageMemberId, memberId);
+//        return ApiResponse.success(memberId);
+//    }
 
     // 채팅방 퇴장
     @PostMapping(value = "/chatroom/{chatRoomId}/leave")
     @PreAuthorize("isAuthenticated()")
     public ApiResponse<Long> leaveChatRoom(
             @PathVariable Long chatRoomId,
-            @RequestHeader("Authorization") String token) {
-        CustomUserDetails userDetails = (CustomUserDetails) SecurityContextHolder.
-                getContext().
-                getAuthentication().
-                getPrincipal();
+            @RequestHeader("Authorization") String token,
+            CustomUserDetails userDetails) {
         Long leaveMemberId = userDetails.getMemberId();
 
         chatCommandService.leaveChatRoom(chatRoomId, leaveMemberId, token);
         //messagingTemplate.convertAndSend("/app/chat.leave/" + chatRoomId, leaveMemberId); // handleLeave 호출
-
-
         return ApiResponse.success(leaveMemberId);
     }
 
@@ -133,8 +137,10 @@ public class ChatController {
     @GetMapping("/chatroom/{chatRoomId}/info")
     @PreAuthorize("isAuthenticated()")
     public ApiResponse<ChatRoomDetailResponse> getChatRoomInfo(
-            @PathVariable Long chatRoomId) {
-        ChatRoomDetailResponse chatRoomDetailResponse = chatQueryService.getChatRoomDetail(chatRoomId, null);
+            @PathVariable Long chatRoomId,
+            @RequestHeader("Authorization") String token) {
+        logger.info("토큰 검증 : " + token);
+        ChatRoomDetailResponse chatRoomDetailResponse = chatQueryService.getChatRoomDetail(chatRoomId, token);
         return ApiResponse.success(chatRoomDetailResponse);
     }
 

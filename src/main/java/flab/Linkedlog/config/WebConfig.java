@@ -20,13 +20,15 @@ public class WebConfig implements WebMvcConfigurer {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
                 registry.addMapping("/**")
-                        .allowedOrigins("http://localhost:3000")
+                        .allowedOriginPatterns("http://localhost:8080")
                         .allowedMethods("GET", "POST", "PUT", "DELETE")
-                        .allowedHeaders("*")
+                        .allowedHeaders("Authorization", "Content-Type", "Accept")
+                        .exposedHeaders("Authorization", "Content-Type", "Accept")
                         .allowCredentials(true);
             }
         };
     }
+
 
     @Bean
     public MultipartConfigElement multipartConfigElement() {
@@ -43,5 +45,6 @@ public class WebConfig implements WebMvcConfigurer {
     public void addArgumentResolvers(List<HandlerMethodArgumentResolver> resolvers) {
         resolvers.add(customUserDetailsArgumentResolver());
     }
+
 
 }

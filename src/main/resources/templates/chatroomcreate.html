@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Chat Room</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .container {
+            width: 400px;
+            padding: 20px;
+            background-color: #f4f4f4;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            font-size: 22px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        input, select, button {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #4CAF50;
+        }
+
+        button {
+            background-color: #4CAF50;
+            color: white;
+            cursor: pointer;
+            border: none;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+</head>
+<body>
+<div class="container">
+    <h1>Create Chat Room</h1>
+    <form id="chatRoomCreateForm">
+        <div>
+            <label for="title">Chat Room Title</label>
+            <input type="text" id="title" name="title" placeholder="Enter chat room title" required>
+        </div>
+
+        <div>
+            <label for="password">Password (Optional)</label>
+            <input type="password" id="password" name="password" placeholder="Enter password">
+        </div>
+
+        <div>
+            <label for="maxParticipants">Max Participants</label>
+            <select id="maxParticipants" name="maxParticipants" required>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+                <option value="6">6</option>
+                <option value="7">7</option>
+                <option value="8">8</option>
+                <option value="9">9</option>
+                <option value="10">10</option>
+            </select>
+        </div>
+
+        <button type="submit">Create Chat Room</button>
+    </form>
+</div>
+
+<script>
+    const BASE_URL = 'http://localhost:8080';
+
+    document.getElementById('chatRoomCreateForm').addEventListener('submit', async function (event) {
+        event.preventDefault();
+
+        const title = document.getElementById('title').value;
+        const password = document.getElementById('password').value;
+        const maxParticipants = document.getElementById('maxParticipants').value;
+
+        const chatRoomCreateRequest = {
+            title: title,
+            password: password || null,
+            maxParticipants: parseInt(maxParticipants)
+        };
+
+        try {
+            const token = window.opener.localStorage.getItem('authToken'); // 인증 토큰 가져오기
+            console.log('Authorization Token:', token);
+            if (!token) {
+                alert("토큰 없음");
+                return;
+            }
+            const response = await axios.post(`${BASE_URL}/chat/create/group`, chatRoomCreateRequest, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (response.data) {
+                alert('채팅룸이 생성되었습니다');
+                window.opener.location.reload();
+                window.close();
+            } else {
+                console.log(response.data);
+                alert('권한은 있으나 채팅룸 생성 실패');
+            }
+        } catch (error) {
+            console.error('채팅룸 생성 실패', error);
+            alert('채팅룸 생성 실패');
+        }
+    });
+</script>
+</body>
+</html>

@@ -1,6 +1,5 @@
 package flab.Linkedlog.service.chatService;
 
-import flab.Linkedlog.config.CustomUserDetails;
 import flab.Linkedlog.dto.chat.*;
 import flab.Linkedlog.entity.*;
 import flab.Linkedlog.entity.enums.ChatMessageType;
@@ -12,8 +11,9 @@ import flab.Linkedlog.repository.chat.ChatRoomRepository;
 import flab.Linkedlog.util.JwtUtil;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -35,7 +35,7 @@ public class ChatCommandService {
     private final PasswordEncoder passwordEncoder;
     private final Map<Long, Set<Long>> chatRoomUsers = new HashMap<>();
     private final JwtUtil jwtUtil;
-
+    private final Logger logger = LoggerFactory.getLogger(ChatCommandService.class);
 
     // 그룹 채팅방 개설
     public Long createGroupChatRoom(ChatRoomCreateRequest chatRoomCreateRequest, Long memberId) {
@@ -204,6 +204,7 @@ public class ChatCommandService {
                 .id(chatMessage.getId())
                 .chatRoomId(chatMessageInnerRequest.getChatRoomId())
                 .senderId(chatMessageInnerRequest.getSenderId())
+                .senderNickname(sender.getNickName())
                 .chatContent(chatMessageInnerRequest.getChatContent())
                 .chatMessageType(chatMessageInnerRequest.getChatMessageType())
                 .createdAt(chatMessage.getCreatedAt())
@@ -215,7 +216,9 @@ public class ChatCommandService {
 
     // 채팅방 접속
     public ChatMessageConnectResponse connectToChatRoom(Long chatRoomId, String password, String token) {
-        Long memberId = getMemberIdFromTokenOrContext(token);
+
+        logger.info("서비스에서 최초 전달받은 토큰 :" + token);
+        Long memberId = jwtUtil.getMemberIdFromTokenOrContext(token);
 
         ChatRoom chatRoom = chatRoomRepository.findById(chatRoomId)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid chat room ID"));
@@ -251,7 +254,7 @@ public class ChatCommandService {
             messagingTemplate.convertAndSend("/topic/" + chatRoomId, enterMessage);
         }
 
-        messagingTemplate.convertAndSend("/topic/" + chatRoomId + "/users", chatRoomUsers.get(chatRoomId));
+        //messagingTemplate.convertAndSend("/topic/" + chatRoomId + "/users", chatRoomUsers.get(chatRoomId));
 
         return new ChatMessageConnectResponse(
                 chatRoomId,
@@ -276,15 +279,6 @@ public class ChatCommandService {
                 ChatMessageType.EXIT
         );
         messagingTemplate.convertAndSend("/topic/" + chatRoomId, exitMessage);
-    }
-
-
-    private Long getMemberIdFromTokenOrContext(String token) {
-        if (token != null) {
-            return jwtUtil.getMemberIdFromToken(token);
-        }
-        CustomUserDetails userDetails = (CustomUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        return userDetails.getMemberId();
     }
 
 

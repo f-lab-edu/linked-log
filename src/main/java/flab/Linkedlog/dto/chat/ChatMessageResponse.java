@@ -1,7 +1,6 @@
 package flab.Linkedlog.dto.chat;
 
 import flab.Linkedlog.entity.enums.ChatMessageType;
-import flab.Linkedlog.entity.enums.ChatRoomType;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -22,6 +21,9 @@ public class ChatMessageResponse {
 
     @NotNull(message = "작성자 아이디")
     private Long senderId;
+
+    @NotBlank(message = "작성자 닉네임")
+    private String senderNickname;
 
     @NotBlank(message = "채팅 내용")
     private String chatContent;

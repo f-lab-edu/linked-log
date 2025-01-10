@@ -10,6 +10,7 @@ import flab.Linkedlog.repository.MemberRepository;
 import flab.Linkedlog.repository.chat.ChatMemberRepository;
 import flab.Linkedlog.repository.chat.ChatMessageRepository;
 import flab.Linkedlog.repository.chat.ChatRoomRepository;
+import flab.Linkedlog.service.MemberService;
 import flab.Linkedlog.util.JwtUtil;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +30,7 @@ public class ChatQueryService {
     private final ChatMessageRepository chatMessageRepository;
     private final MemberRepository memberRepository;
     private final JwtUtil jwtUtil;
+    private final MemberService memberService;
 
     Map<Long, Set<Long>> chatRoomUsers = new HashMap<>();
 
@@ -48,7 +50,7 @@ public class ChatQueryService {
                 })
                 .collect(Collectors.toList());
     }
-    
+
     // 채팅방 참여자 목록 조회
     public List<ChatRoomMemberListResponse> getChatRoomMemberList(Long chatRoomId) {
         ChatRoom chatRoom = chatRoomRepository.findById(chatRoomId)
@@ -71,8 +73,8 @@ public class ChatQueryService {
 
     // 채팅방 상세 조회
     public ChatRoomDetailResponse getChatRoomDetail(Long chatRoomId, String token) {
-        Long memberId = jwtUtil.getMemberIdFromToken(token);
 
+        Long memberId = jwtUtil.getMemberIdFromTokenOrContext(token);
         // ChatRoom과 Member 검증
         ChatRoom chatRoom = chatRoomRepository.findById(chatRoomId)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid chat room ID"));
@@ -94,6 +96,7 @@ public class ChatQueryService {
                             .id(message.getId())
                             .chatRoomId(message.getChatRoom().getId())
                             .senderId(message.getSender().getId())
+                            .senderNickname(message.getSender().getNickName())
                             .chatContent(message.getMessage())
                             .chatMessageType(message.getChatMessageType())
                             .createdAt(message.getCreatedAt())

@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>채팅방 상세</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        .chat-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        .chat-header {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px;
+            text-align: center;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 10px;
+            background-color: #f4f4f4;
+            overflow-y: scroll;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .chat-input {
+            padding: 10px;
+            display: flex;
+            border-top: 1px solid #ddd;
+        }
+
+        .chat-input input {
+            flex: 1;
+            padding: 8px;
+            margin-right: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        .chat-users {
+            background-color: #f9f9f9;
+            padding: 10px;
+            border-top: 1px solid #ddd;
+            overflow-y: auto;
+            height: 150px;
+        }
+
+        .user-item {
+            display: flex;
+            align-items: center;
+            padding: 5px;
+            margin-bottom: 8px;
+        }
+
+        .user-item img {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+
+        .user-item span {
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+<div class="chat-container">
+    <div class="chat-header">
+        <h2 id="chatRoomTitle">채팅방 이름</h2>
+        <button onclick="exitChat()">접속 해제</button>
+        <button onclick="leaveChat()">퇴장</button>
+    </div>
+    <div class="chat-messages" id="chatMessages">
+    </div>
+    <div class="chat-input">
+        <input type="text" placeholder="메시지를 입력하세요" id="chatInput">
+        <button onclick="sendMessage()">전송</button>
+    </div>
+    <div class="chat-users">
+        <h3>참여 중인 사용자</h3>
+        <div id="chatUsers">
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sockjs-client@1.5.1/dist/sockjs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+
+
+<script>
+    const chatRoomId = window.location.pathname.split('/')[window.location.pathname.split('/').length - 2];
+    console.log(chatRoomId);
+
+
+    async function fetchChatRoomData() {
+        try {
+            const token = localStorage.getItem('authToken');
+            console.log(token);
+
+            // GetMapping
+            const response = await fetch(`/chat/chatroom/${chatRoomId}/info`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('채팅룸 불러오기 실패');
+            }
+            const data = await response.json();
+            console.log(data.response);
+            renderChatRoomData(data.response);
+        } catch (error) {
+            console.error(error);
+            alert('채팅방 데이터를 불러오는 데 실패했습니다.');
+        }
+    }
+
+
+    // 데이터를 HTML에 렌더링하는 함수
+    function renderChatRoomData(chatRoomDetailResponse) {
+        document.getElementById('chatRoomTitle').innerText = chatRoomDetailResponse.title;
+        const chatMessages = document.getElementById('chatMessages');
+
+
+        // DB에서 불러온 메세지
+        chatRoomDetailResponse.recentMessages.forEach(message => {
+            const messageDiv = document.createElement('div');
+            messageDiv.innerHTML = `
+            <strong>${message.chatContent}</strong>
+            <span>${new Date(message.createdAt).toLocaleString()}</span>
+        `;
+            chatMessages.appendChild(messageDiv);
+        });
+
+
+        // 채팅방 참여자
+        const chatUsers = document.getElementById('chatUsers');
+        chatUsers.innerHTML = '';
+        chatRoomDetailResponse.joinedUserInfo.forEach(user => {
+            const userDiv = document.createElement('div');
+            userDiv.classList.add('user-item');
+            userDiv.innerHTML = `
+            <img src="https://flab-linkedlog-storage.s3.amazonaws.com/${user.profileUrl}" alt="프로필 이미지">
+            <span>${user.nickName}</span>
+            <span>${user.manager ? ' 관리자' : ''}</span>
+        `;
+            chatUsers.appendChild(userDiv);
+        });
+    }
+
+
+    window.onload = async function () {
+        await fetchChatRoomData();
+        connect();
+    };
+
+
+    let stompClient = null;
+    let successfulConnections = 0;
+
+    function connect() {
+        const token = localStorage.getItem('authToken');
+        const socket = new SockJS('/ws-chat');
+        stompClient = Stomp.over(socket);
+
+        stompClient.connect({Authorization: `Bearer ${token}`}, function (frame) {
+            successfulConnections++;
+            console.log(`WebSocket 연결 성공 횟수: ${successfulConnections}`);
+            console.log('Connected: ' + frame);
+
+
+            stompClient.subscribe('/topic/' + chatRoomId, function (response) {
+                console.log("실시간 입력된 메세지:", JSON.parse(response.body));
+                addChatMessage(JSON.parse(response.body));
+            });
+        }, function (error) {
+            console.log("웹소켓 연결 실패: " + error);
+        });
+    }
+
+
+    function addChatMessage(message) {
+        const chatMessages = document.getElementById('chatMessages');
+        const messageDiv = document.createElement('div');
+        messageDiv.innerHTML = `
+        <strong>${message.senderNickname} : </strong>
+        <strong>${message.chatContent}</strong>
+        <span>${new Date(message.createdAt).toLocaleString()}</span>
+    `;
+        chatMessages.appendChild(messageDiv);
+    }
+
+
+    // 메시지 전송 함수
+    function sendMessage() {
+        const chatInput = document.getElementById('chatInput');
+        const message = chatInput.value;
+        if (message.trim()) {
+            const token = localStorage.getItem('authToken');
+            const chatMessageRequest = {
+                token: token,
+                chatContent: message,
+                chatMessageType: 'SEND'
+            };
+            stompClient.send("/app/chat/" + chatRoomId + "/sendMessage", {}, JSON.stringify(chatMessageRequest));
+            chatInput.value = '';
+        } else {
+            alert('메시지를 입력해주세요!');
+        }
+    }
+
+
+    // 채팅방 접속 해제
+    function exitChat() {
+        const token = localStorage.getItem('authToken');
+        if (!stompClient || !stompClient.connected) {
+            console.log("WebSocket 연결이 없습니다.");
+            return;
+        }
+        stompClient.send(`/app/chat.exit/${chatRoomId}`, {}, token);
+        alert("채팅방에서 접속이 해제되었습니다.");
+        window.location.href = "/front/chat/chatroom";
+    }
+
+
+    // 채팅방 퇴장
+    async function leaveChat() {
+        try {
+            const token = localStorage.getItem('authToken');
+            const response = await fetch(`/chatroom/${chatRoomId}/leave`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('채팅방 퇴장에 실패했습니다.');
+            }
+
+            alert("채팅방에서 퇴장했습니다.");
+            window.location.href = "/front/chat/chatroom";
+        } catch (error) {
+            console.error(error);
+            alert("채팅방 퇴장 중 오류가 발생했습니다.");
+        }
+    }
+
+</script>
+
+</body>
+</html>
