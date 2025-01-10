@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Main Page</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f4f4f4;
+        }
+
+        .container {
+            text-align: center;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            width: 300px;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+
+        .button {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            text-align: center;
+            text-decoration: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .button:hover {
+            background-color: #45a049;
+        }
+
+        .button-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .user-info {
+            margin-top: 20px;
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Main Page</h1>
+    <div class="button-container">
+        <a th:href="@{/front/signup}" class="button">Sign Up</a>
+        <a th:href="@{/front/login}" class="button">Login</a>
+        <a th:href="@{/front/chat/chatroom}" class="button">Chat Room List</a>
+        <a th:href="@{/front/posts}" class="button">Post List</a>
+    </div>
+
+    <div class="user-info" id="user-info" style="display: none;">
+        <p>Welcome, <span id="nickName"></span>!</p>
+        <p>Your User ID: <span id="id"></span></p>
+    </div>
+
+    <div class="login-message" id="login-message" style="display: none;">
+        <p>현재 로그인 상태가 아닙니다.</p>
+    </div>
+</div>
+
+<script>
+
+    // Local Storage에서 토큰을 가져온다.
+    const token = localStorage.getItem('authToken');
+    console.log('Token:', token);
+
+    // 토큰 존재 여부에 따라 화면 출력 다르게
+    if (token) {
+        // MainController @GetMapping(value = "/main")
+        function fetchUserInfo() {
+            fetch('/main', {
+                method: 'GET',
+                headers: {
+                    'Authorization': 'Bearer ' + token
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('User Info Response:', data);
+                    if (data && data.response) {
+                        const userInfo = data.response;
+                        document.getElementById('nickName').textContent = userInfo.nickname;
+                        document.getElementById('id').textContent = userInfo.id;
+                        document.getElementById('user-info').style.display = 'block';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching user info:', error);
+                });
+        }
+
+        fetchUserInfo();
+    } else {
+        document.getElementById('user-info').style.display = 'none';
+        document.getElementById('login-message').style.display = 'block';
+    }
+</script>
+
+</body>
+</html>

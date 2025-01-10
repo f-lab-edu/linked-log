@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Room List</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f4f4f4;
+        }
+
+        .button-container {
+            margin-top: 20px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .button {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            text-decoration: none;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        .button:hover {
+            background-color: #45a049;
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+</head>
+<body>
+<h1>Chat Room List</h1>
+<table>
+    <thead>
+    <tr>
+        <th>ID</th>
+        <th>Title</th>
+        <th>Nickname</th>
+        <th>Has Password</th>
+        <th>Created At</th>
+        <th>Max Participants</th>
+    </tr>
+    </thead>
+    <tbody id="chatRoomTableBody">
+    </tbody>
+</table>
+
+<div class="button-container">
+    <button class="button" onclick="goToMain()">Main으로 이동</button>
+    <button class="button" onclick="createChatRoom()">채팅방 개설</button>
+</div>
+
+<script>
+    const BASE_URL = 'http://localhost:8080';
+
+    async function fetchChatRooms() {
+        try {
+            // 토큰 가져오다
+            const token = localStorage.getItem('authToken');
+            if (!token) {
+                alert('token이 없습니다');
+                return;
+            }
+            console.log('채팅룸 선택 Authorization Token:', token);
+
+
+            // 채팅룸 목록 가져오는 @GetMapping
+            const response = await axios.get(`${BASE_URL}/chat/chatroom`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                },
+            });
+            const chatRooms = response.data.response;
+            renderChatRooms(chatRooms);
+        } catch (error) {
+            console.error('Error fetching chat rooms:', error);
+            if (error.response && error.response.status === 401) {
+                alert('Unauthorized');
+            } else {
+                alert('Failed to fetch chat rooms');
+            }
+        }
+    }
+
+    //채팅룸 출력 함수
+    function renderChatRooms(chatRooms) {
+        const tableBody = document.getElementById('chatRoomTableBody');
+        tableBody.innerHTML = '';
+
+        chatRooms.forEach(room => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+          <td><a href="javascript:void(0)" onclick="joinChatRoom(${room.id})">참여하기</a></td>
+          <td>${room.title}</td>
+          <td>${room.nickName}</td>
+          <td>${room.hasPassword ? 'Yes' : 'No'}</td>
+          <td>${new Date(room.createdAt).toLocaleString()}</td>
+          <td>${room.maxParticipants}</td>
+        `;
+            tableBody.appendChild(row);
+        });
+    }
+
+    // 메인으로 돌아가는 버튼
+    function goToMain() {
+        window.location.href = '/front/main';
+    }
+
+    // 채팅룸 생성 버튼(팝업창 로드)
+    function createChatRoom() {
+        const token = localStorage.getItem('authToken');
+        if (!token) {
+            alert('토큰 없음');
+            return;
+        } else {
+            console.log('채팅방 개설 입력 Authorization Token:', token);
+        }
+
+        const popupWidth = 500;
+        const popupHeight = 600;
+        const popupX = window.screen.width / 2 - popupWidth / 2;
+        const popupY = window.screen.height / 2 - popupHeight / 2;
+
+        const popup = window.open(
+            '/front/chat/create/group/form',
+            'ChatRoomCreate',
+            `width=${popupWidth},height=${popupHeight},left=${popupX},top=${popupY},resizable=no,scrollbars=no`
+        );
+        popup.onload = () => {
+            popup.localStorage.setItem('authToken', token);
+            popup.location.reload();
+        };
+    }
+
+    window.onload = () => {
+        const token = localStorage.getItem('authToken');
+        if (!token) {
+            alert('토큰 없음');
+        } else {
+            fetchChatRooms();
+        }
+    };
+
+
+    // 각 채팅방마다 참가 버튼
+    async function joinChatRoom(chatRoomId) {
+        const token = localStorage.getItem('authToken');
+        if (!token) {
+            alert('토큰 없음');
+            return;
+        }
+
+        // 비밀번호 하드코딩
+        // 테스트할 때 비번 1234로 통일
+        const password = '1234';
+
+        const requestData = {
+            password: password
+        };
+
+        try {
+            // 채팅룸 접속 Post Mapping
+            const response = await axios.post(`${BASE_URL}/chat/chat.connect/${chatRoomId}`, requestData, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+            console.log(response.data.response);
+
+            if (response.data) {
+                alert('채팅룸 입장되었습니다');
+                window.location.href = `/front/chat/chatroom/${chatRoomId}/info`;
+            } else {
+                alert('채팅룸 입장 실패');
+            }
+        } catch (error) {
+            console.error('채팅룸 입장 실패', error);
+            alert('채팅룸 입장 실패');
+        }
+    }
+</script>
+</body>
+</html>

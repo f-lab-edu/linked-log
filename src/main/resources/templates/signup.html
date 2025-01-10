@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f4f4f4;
+        }
+
+        .container {
+            text-align: center;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            width: 400px;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        input, button {
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            outline: none;
+        }
+
+        input:focus {
+            border-color: #4CAF50;
+        }
+
+        button {
+            background-color: #4CAF50;
+            color: white;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        .error {
+            color: red;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Sign Up</h1>
+    <form id="signUpForm">
+        <input type="text" id="userId" name="userId" placeholder="User ID" required>
+        <input type="password" id="password" name="password" placeholder="Password" required>
+        <input type="text" id="nickname" name="nickname" placeholder="Nickname" required>
+        <div style="display: flex; gap: 5px;">
+            <input type="text" id="email1" name="email1" placeholder="Email (e.g., user)" required>
+            <span>@</span>
+            <input type="text" id="email2" name="email2" placeholder="Domain (e.g., example.com)" required>
+        </div>
+        <div style="display: flex; gap: 5px;">
+            <input type="text" id="phone1" name="phone1" placeholder="Phone (e.g., 010)" required>
+            <input type="text" id="phone2" name="phone2" placeholder="Middle digits" required>
+            <input type="text" id="phone3" name="phone3" placeholder="Last digits" required>
+        </div>
+        <input type="file" id="profileImage" name="profileImage">
+        <button type="submit">Sign Up</button>
+        <div id="errorMessage" class="error"></div>
+    </form>
+</div>
+
+<script>
+    document.getElementById('signUpForm').addEventListener('submit', function (event) {
+        event.preventDefault();
+
+        const formData = new FormData();
+        formData.append('signUpRequest', JSON.stringify({
+            userId: document.getElementById('userId').value,
+            password: document.getElementById('password').value,
+            nickname: document.getElementById('nickname').value,
+            email1: document.getElementById('email1').value,
+            email2: document.getElementById('email2').value,
+            phone1: document.getElementById('phone1').value,
+            phone2: document.getElementById('phone2').value,
+            phone3: document.getElementById('phone3').value
+        }));
+
+        const profileImage = document.getElementById('profileImage').files[0];
+        if (profileImage) {
+            formData.append('profileImage', profileImage);
+        }
+
+        fetch('/signup', {
+            method: 'POST',
+            body: formData
+        })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to sign up.');
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Sign up successful:', data);
+                alert('회원가입이 완료되었습니다.');
+                window.location.href = '/front/main';
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('errorMessage').textContent = '회원가입에 실패했습니다. 다시 시도해주세요.';
+            });
+    });
+</script>
+
+</body>
+</html>

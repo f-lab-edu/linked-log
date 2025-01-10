@@ -18,6 +18,8 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import java.util.List;
+
 
 @Configuration
 @RequiredArgsConstructor
@@ -38,7 +40,9 @@ public class SecurityConfiguration {
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
                         .requestMatchers("/admin-v1/**").hasAuthority("GENERAL")
                         .requestMatchers("/admin/**").hasAuthority("ADMIN")
-                        .requestMatchers("/signup", "/login", "/chat/chatroom").permitAll()
+                        .requestMatchers("/signup", "/login", "/chat/chatroom", "/main").permitAll()
+                        .requestMatchers("/front/signup", "/front/login", "/front/chat/chatroom", "/front/main", "/front/chat/create/group/form"
+                                , "/front/chat.connect/**", "/front/chat/chatroom/**", "/ws-chat/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(exception -> exception
@@ -67,7 +71,7 @@ public class SecurityConfiguration {
 
     private CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.addAllowedOrigin("http://localhost:3000"); // React 앱의 URL
+        configuration.setAllowedOriginPatterns(List.of("http://localhost:8080")); // React 앱의 URL
         configuration.addAllowedMethod("*");
         configuration.addAllowedHeader("*");
         configuration.setAllowCredentials(true);

@@ -1,5 +1,6 @@
 package flab.Linkedlog.util;
 
+import flab.Linkedlog.config.CustomUserDetails;
 import flab.Linkedlog.config.JwtProperties;
 import flab.Linkedlog.entity.enums.MemberGrade;
 import io.jsonwebtoken.Claims;
@@ -8,7 +9,10 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
 import java.security.Key;
@@ -23,6 +27,7 @@ public class JwtUtil {
 
     private final JwtProperties jwtProperties;
     private final Key key;
+    private final Logger logger = LoggerFactory.getLogger(JwtUtil.class);
 
     @Autowired
     public JwtUtil(JwtProperties jwtProperties) {
@@ -86,6 +91,23 @@ public class JwtUtil {
             return Long.parseLong((String) memberIdObj);
         }
         throw new IllegalArgumentException("Invalid memberId type in token");
+    }
+
+    public Long getMemberIdFromTokenOrContext(String token) {
+
+        if (token != null && token.startsWith("Bearer ")) {
+
+            token = token.substring(7);
+
+            logger.info("사용자에게서 받은 토큰" + token);
+            Long userId = getMemberIdFromToken(token);
+            logger.info("추출 아이디" + userId);
+            return userId;
+        }
+        CustomUserDetails userDetails = (CustomUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Long id = userDetails.getMemberId();
+        logger.info("추출 아이디" + id);
+        return id;
     }
 
 }

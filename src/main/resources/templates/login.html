@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+
+        form {
+            width: 300px;
+            margin: auto;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        .error {
+            color: red;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<h2>Login</h2>
+
+<form id="loginForm" th:action="@{/login}" method="post">
+    <label for="userId">User ID:</label>
+    <input type="text" id="userId" name="userId" required>
+
+    <label for="password">Password:</label>
+    <input type="password" id="password" name="password" required>
+
+    <button type="submit">Login</button>
+</form>
+
+<p class="error" id="errorMessage" th:text="${errorMessage}"></p>
+
+
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
+<script>
+    const BASE_URL = 'http://localhost:8080';
+
+    document.getElementById('loginForm').addEventListener('submit', async function (event) {
+        event.preventDefault();
+
+        const userId = document.getElementById('userId').value;
+        const password = document.getElementById('password').value;
+
+        const loginData = {
+            userId: userId,
+            password: password
+        };
+
+        try {
+            const response = await axios.post(`${BASE_URL}/login`, loginData);
+            console.log(response.data);
+            const token = response.data.response;
+            alert('Login successful! Token: ' + token);
+            localStorage.setItem('authToken', token);
+            window.location.href = '/front/main';
+
+        } catch (error) {
+            if (error.response && error.response.data && error.response.data.error) {
+                document.getElementById('errorMessage').textContent = error.response.data.error;
+            } else {
+                document.getElementById('errorMessage').textContent = 'An error occurred. Please try again.';
+            }
+        }
+    });
+</script>
+
+</body>
+</html>

@@ -1,5 +1,6 @@
 package flab.Linkedlog.service;
 
+import flab.Linkedlog.dto.MainResponse;
 import flab.Linkedlog.dto.member.LogInRequest;
 import flab.Linkedlog.dto.member.SignUpRequest;
 import flab.Linkedlog.entity.Member;
@@ -101,6 +102,26 @@ public class MemberService {
         }
 
         return jwtUtil.generateToken(member.getUserId(), member.getMemberGrade(), member.getId());
+    }
+
+    public MainResponse getMain(Long id, String token) {
+
+        Member member = memberRepository.findById(id).orElseThrow();
+        String nickName = member.getNickName();
+
+        return MainResponse.builder()
+                .id(id)
+                .nickname(nickName)
+                .build();
+
+    }
+
+    public MainResponse getMainForGuest() {
+        return MainResponse.builder()
+                .id(null)
+                .nickname(null)
+                .message("환영합니다")
+                .build();
     }
 
 //    // 마이페이지
