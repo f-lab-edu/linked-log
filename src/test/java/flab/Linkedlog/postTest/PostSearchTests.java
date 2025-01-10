@@ -18,6 +18,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.Page;
@@ -54,6 +55,8 @@ public class PostSearchTests {
 
     private Long testWriterId;
     private Long testCategoryId;
+    @Value("${profile.default-image-url}")
+    private String defaultProfileImage;
 
     @BeforeEach
     void setUp() {
@@ -64,6 +67,7 @@ public class PostSearchTests {
                 .email("writeremail@test.com")
                 .phone("010-0000-0000")
                 .memberGrade(MemberGrade.GENERAL)
+                .profileImage(defaultProfileImage)
                 .build();
         testWriter = memberRepository.save(testWriter);
         testWriterId = testWriter.getId();

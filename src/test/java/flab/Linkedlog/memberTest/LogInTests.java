@@ -7,6 +7,7 @@ import flab.Linkedlog.repository.MemberRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
@@ -35,6 +36,9 @@ public class LogInTests {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    @Value("${profile.default-image-url}")
+    private String defaultProfileImage;
+
 
     @Test
     @DisplayName("로그인 성공 테스트")
@@ -49,6 +53,7 @@ public class LogInTests {
                 .nickName("testNickname")
                 .email("testUser@gmail.com")
                 .phone("010-1111-2222")
+                .profileImage(defaultProfileImage)
                 .build();
         memberRepository.save(member);
 
@@ -84,6 +89,7 @@ public class LogInTests {
                 .nickName("testNickname")
                 .email("testUser@gmail.com")
                 .phone("010-1111-2222")
+                .profileImage(defaultProfileImage)
                 .build();
         memberRepository.save(member);
 
@@ -123,6 +129,7 @@ public class LogInTests {
                 .nickName("testNickname")
                 .email("testUser@gmail.com")
                 .phone("010-1111-2222")
+                .profileImage(defaultProfileImage)
                 .build();
         memberRepository.save(member);
 

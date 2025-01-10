@@ -2,7 +2,6 @@ package flab.Linkedlog.controller;
 
 import flab.Linkedlog.config.CustomUserDetails;
 import flab.Linkedlog.controller.response.ApiResponse;
-import flab.Linkedlog.controller.response.RestPageImpl;
 import flab.Linkedlog.dto.post.CreatePostRequest;
 import flab.Linkedlog.dto.post.PostDetailResponse;
 import flab.Linkedlog.dto.post.PostListResponse;
@@ -11,10 +10,13 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 
 @RestController
@@ -25,17 +27,29 @@ public class PostController {
     private final PostService postService;
 
     // 글 등록
-    @PostMapping("/category/{categoryId}/write")
+    @PostMapping(value = "/category/{categoryId}/write", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("isAuthenticated()")
-    public ApiResponse<Long> createPost(@Valid @RequestBody CreatePostRequest createPostRequest,
-                                        @PathVariable Long categoryId) {
+    public ApiResponse<Long> createPost(
+            @Valid @RequestPart CreatePostRequest createPostRequest,
+            @PathVariable Long categoryId,
+            @RequestPart(required = false) List<MultipartFile> images) throws IOException {
         CustomUserDetails userDetails = (CustomUserDetails) SecurityContextHolder.
                 getContext().
                 getAuthentication().
                 getPrincipal();
         Long memberId = userDetails.getMemberId();
 
-        Long postId = postService.createPost(createPostRequest, categoryId, memberId);
+        if (createPostRequest.getTitle() == null || createPostRequest.getTitle().isBlank()) {
+            throw new IllegalArgumentException();
+        }
+        if (createPostRequest.getContent() == null || createPostRequest.getContent().isBlank()) {
+            throw new IllegalArgumentException();
+        }
+        if (images != null && images.size() > 20) {
+            throw new IllegalArgumentException();
+        }
+
+        Long postId = postService.createPost(createPostRequest, categoryId, memberId, images);
         return ApiResponse.success(postId);
     }
 

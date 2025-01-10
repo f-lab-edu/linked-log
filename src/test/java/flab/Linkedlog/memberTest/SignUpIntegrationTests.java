@@ -1,6 +1,5 @@
 package flab.Linkedlog.memberTest;
 
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import flab.Linkedlog.controller.response.ApiResponse;
 import flab.Linkedlog.dto.member.SignUpRequest;
@@ -8,21 +7,26 @@ import flab.Linkedlog.entity.Member;
 import flab.Linkedlog.entity.enums.MemberGrade;
 import flab.Linkedlog.entity.enums.MemberStatus;
 import flab.Linkedlog.repository.MemberRepository;
+import flab.Linkedlog.service.S3Service;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
 @Transactional
@@ -41,11 +45,16 @@ public class SignUpIntegrationTests {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    @Autowired
+    private S3Service s3Service;
+
+    @Value("${aws.s3.bucket}")
+    private String bucketName;
+
 
     @Test
     @DisplayName("회원 가입 성공 테스트")
     void signUpSuccessfulTest() throws Exception {
-
         // Given
         SignUpRequest signUpRequest = SignUpRequest.builder()
                 .userId("testUser")
@@ -58,10 +67,22 @@ public class SignUpIntegrationTests {
                 .phone3("2345")
                 .build();
 
+        // Convert SignUpRequest to JSON
+        String signUpRequestJson = new ObjectMapper().writeValueAsString(signUpRequest);
+
+        // Create a MockMultipartFile for signUpRequest
+        MockMultipartFile signUpRequestPart = new MockMultipartFile(
+                "signUpRequest",
+                "signUpRequest.json",
+                "application/json",
+                signUpRequestJson.getBytes()
+        );
+
         // When
-        MvcResult result = mockMvc.perform(post("/signup")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(signUpRequest)))
+        MvcResult result = mockMvc.perform(multipart("/signup")
+                        .file("profileImage", new byte[0])
+                        .file(signUpRequestPart)
+                        .contentType(MediaType.MULTIPART_FORM_DATA))
                 .andReturn();
 
         // Then
@@ -71,8 +92,8 @@ public class SignUpIntegrationTests {
         assertThat(result.getResponse().getStatus()).isEqualTo(200);
         assertThat(response.getResponse()).isNotNull();
 
-
-        Member member = memberRepository.findByUserId("testUser").orElseThrow(() -> new RuntimeException("회원이 존재하지 않습니다"));
+        Member member = memberRepository.findByUserId("testUser")
+                .orElseThrow(() -> new RuntimeException("회원이 존재하지 않습니다"));
 
         assertThat(member).isNotNull();
         assertThat(member.getUserId()).isEqualTo("testUser");
@@ -97,7 +118,6 @@ public class SignUpIntegrationTests {
     @DisplayName("회원 가입 중복 테스트")
     void signUpDuplicateTest() throws Exception {
 
-        // Given
         SignUpRequest initialSignUpRequest = SignUpRequest.builder()
                 .userId("member01")
                 .password("passwd1")
@@ -109,15 +129,28 @@ public class SignUpIntegrationTests {
                 .phone3("3333")
                 .build();
 
-        MvcResult initialResult = mockMvc.perform(post("/signup")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(initialSignUpRequest)))
+        // Convert SignUpRequest to JSON
+        String signUpRequestJson = new ObjectMapper().writeValueAsString(initialSignUpRequest);
+
+        // Create a MockMultipartFile for signUpRequest
+        MockMultipartFile signUpRequestPart = new MockMultipartFile(
+                "signUpRequest",
+                "signUpRequest.json",
+                "application/json",
+                signUpRequestJson.getBytes()
+        );
+
+        // When (initial sign up)
+        MvcResult initialResult = mockMvc.perform(multipart("/signup")
+                        .file("profileImage", new byte[0])
+                        .file(signUpRequestPart)
+                        .contentType(MediaType.MULTIPART_FORM_DATA))
+                .andExpect(status().isOk())
                 .andReturn();
 
         String initialResponseContent = initialResult.getResponse().getContentAsString();
         ApiResponse initialResponse = objectMapper.readValue(initialResponseContent, ApiResponse.class);
 
-        assertThat(initialResult.getResponse().getStatus()).isEqualTo(200);
         assertThat(initialResponse.getResponse()).isEqualTo("member01");
 
         SignUpRequest duplicateSignUpRequest = SignUpRequest.builder()
@@ -131,20 +164,96 @@ public class SignUpIntegrationTests {
                 .phone3("3333")
                 .build();
 
-        MvcResult duplicateResult = mockMvc.perform(post("/signup")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(duplicateSignUpRequest)))
+        String duplicateSignUpRequestJson = new ObjectMapper().writeValueAsString(duplicateSignUpRequest);
+
+        MockMultipartFile duplicateSignUpRequestPart = new MockMultipartFile(
+                "signUpRequest",
+                "signUpRequest.json",
+                "application/json",
+                duplicateSignUpRequestJson.getBytes()
+        );
+
+        // When
+        MvcResult duplicateResult = mockMvc.perform(multipart("/signup")
+                        .file("profileImage", new byte[0])
+                        .file(duplicateSignUpRequestPart)
+                        .contentType(MediaType.MULTIPART_FORM_DATA))
+                .andExpect(status().isInternalServerError())
                 .andReturn();
 
         String duplicateResponseContent = duplicateResult.getResponse().getContentAsString();
         ApiResponse duplicateResponse = objectMapper.readValue(duplicateResponseContent, ApiResponse.class);
 
-        assertThat(duplicateResult.getResponse().getStatus()).isEqualTo(500);
         assertThat(duplicateResponse.getError()).isEqualTo("INVALID_STATE");
 
-        Member existingMember = memberRepository.findByUserId("member01").orElseThrow(() -> new RuntimeException("회원이 존재하지 않습니다"));
+        Member existingMember = memberRepository.findByUserId("member01")
+                .orElseThrow(() -> new RuntimeException("회원이 존재하지 않습니다"));
         assertThat(existingMember).isNotNull();
         assertThat(existingMember.getUserId()).isEqualTo("member01");
+    }
+
+    @Test
+    @DisplayName("프로필 이미지 등록 테스트")
+    void signUpWithProfileImageTest() throws Exception {
+
+        // Given
+        SignUpRequest signUpRequest = SignUpRequest.builder()
+                .userId("testUser")
+                .password("testpasswd")
+                .nickname("testNickname")
+                .email1("emailfront")
+                .email2("gmail.com")
+                .phone1("010")
+                .phone2("1111")
+                .phone3("2345")
+                .build();
+
+        String signUpRequestJson = new ObjectMapper().writeValueAsString(signUpRequest);
+
+        MockMultipartFile signUpRequestPart = new MockMultipartFile(
+                "signUpRequest",
+                "signUpRequest.json",
+                "application/json",
+                signUpRequestJson.getBytes()
+        );
+
+        MockMultipartFile profileImage = new MockMultipartFile(
+                "profileImage",
+                "test-image.png",
+                MediaType.IMAGE_PNG_VALUE,
+                "dummy image content".getBytes(StandardCharsets.UTF_8)
+        );
+
+        // When
+        MvcResult result = mockMvc.perform(multipart("/signup")
+                        .file("profileImage", profileImage.getBytes())
+                        .file(signUpRequestPart)
+                        .contentType(MediaType.MULTIPART_FORM_DATA))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        // Then
+        String jsonResponse = result.getResponse().getContentAsString();
+        ApiResponse response = objectMapper.readValue(jsonResponse, ApiResponse.class);
+
+        assertThat(response.getResponse()).isNotNull();
+
+        Member member = memberRepository.findByUserId("testUser").orElseThrow(() -> new RuntimeException("회원이 존재하지 않습니다"));
+
+        assertThat(member).isNotNull();
+        assertThat(member.getProfileImage()).isNotNull();
+//        String profileImageFileName = member.getProfileImage();
+//        assertThat(profileImageFileName).endsWith("test-image.png");
+//        assertThat(profileImageFileName).contains("_");
+
+        String profileImageUrl = member.getProfileImage();
+        String profileImageKey = profileImageUrl.substring(profileImageUrl.lastIndexOf("/") + 1);
+
+        String s3Url = s3Service.getFileUrl(profileImageKey, bucketName);
+        assertThat(s3Url).contains(profileImageKey);
+
+        s3Service.deleteFile(profileImageKey, bucketName);
+
     }
 
 

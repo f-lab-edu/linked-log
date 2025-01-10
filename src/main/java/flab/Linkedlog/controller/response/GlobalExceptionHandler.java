@@ -93,7 +93,7 @@ public class GlobalExceptionHandler {
 
         logger.error("유효성 검사 실패: {}", errorMessage, e);
 
-        return ApiResponse.error("VALIDATION_FAILED", errorMessage);
+        return ApiResponse.error("VALIDATION_FAILED", e.getBindingResult().toString());
     }
 
     @ExceptionHandler(EntityNotFoundException.class)
@@ -103,5 +103,6 @@ public class GlobalExceptionHandler {
         ApiResponse<ErrorResponse> errorResponse = ApiResponse.error("NOT_FOUND", e.getMessage());
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
     }
+
 
 }

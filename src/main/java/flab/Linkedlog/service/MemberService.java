@@ -6,12 +6,16 @@ import flab.Linkedlog.entity.Member;
 import flab.Linkedlog.repository.MemberRepository;
 import flab.Linkedlog.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
 @Service
 @Transactional
@@ -21,9 +25,19 @@ public class MemberService {
     private final MemberRepository memberRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
+    private final ImageUploadService imageUploadService;
+
+    @Value("${profile.default-image-url}")
+    private String defaultProfileImage;
+
+    @Value("${profile.default-folder-path}")
+    private String defaultProfilepath;
+
+    @Value("${aws.s3.bucket}")
+    private String bucketName;
 
     // 회원가입
-    public Long signUp(SignUpRequest signUpDto) {
+    public Long signUp(SignUpRequest signUpDto, MultipartFile profileImage) throws IOException {
 
         String userId = signUpDto.getUserId();
         String rawPassword = signUpDto.getPassword();
@@ -39,12 +53,24 @@ public class MemberService {
                 .nickName(nickname)
                 .email(email)
                 .phone(phone)
+                .profileImage(defaultProfilepath + defaultProfileImage)
                 .build();
 
         validateDuplicateMember(member);
         memberRepository.save(member);
-        return member.getId();
 
+        if (profileImage != null && !profileImage.isEmpty()) {
+            // async
+            CompletableFuture<String> uploadFuture = imageUploadService.uploadProfileImageAsync(profileImage);
+            uploadFuture.thenAccept(imageUrl -> {
+                member.storeProfileImage(imageUrl);
+                memberRepository.save(member);
+            }).exceptionally(e -> {
+                throw new RuntimeException();
+            });
+        }
+
+        return member.getId();
     }
 
     public void validateDuplicateMember(Member member) {
@@ -63,6 +89,7 @@ public class MemberService {
                 .orElseThrow(() -> new BadCredentialsException("User Not Found") {
                 });
 
+
         if (member == null) {
             throw new BadCredentialsException("User not found") {
             };
@@ -75,6 +102,19 @@ public class MemberService {
 
         return jwtUtil.generateToken(member.getUserId(), member.getMemberGrade(), member.getId());
     }
+
+//    // 마이페이지
+//    @Transactional(readOnly = true)
+//    public Optional<MyPageResponse> getMyPageById(Long memberId) {
+//        Member member = memberRepository.findById(memberId)
+//                .orElseThrow(() -> new EntityNotFoundException("Member not found"));
+//        String profileImageUrl = s3Service.getFileUrl(member.getProfileImage());
+//
+//        return Optional.of(new MyPageResponse(
+//                profileImageUrl,
+//                member.getNickName()
+//        ));
+//    }
 
 
 }

@@ -4,18 +4,25 @@ import flab.Linkedlog.dto.post.CreatePostRequest;
 import flab.Linkedlog.dto.post.PostDetailResponse;
 import flab.Linkedlog.dto.post.PostListResponse;
 import flab.Linkedlog.entity.Post;
+import flab.Linkedlog.entity.PostImage;
 import flab.Linkedlog.repository.CategoryRepository;
 import flab.Linkedlog.repository.MemberRepository;
+import flab.Linkedlog.repository.postImage.PostImageRepository;
 import jakarta.persistence.EntityNotFoundException;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Collections;
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 @Service
@@ -25,29 +32,55 @@ public class PostService {
 
     private final CategoryRepository categoryRepository;
     private final MemberRepository memberRepository;
+    private final PostImageRepository postImageRepository;
     private final flab.Linkedlog.repository.post.PostRepository postRepository;
+    private final ImageUploadService imageUploadService;
 
+    @Value("${aws.s3.bucket}")
+    private String bucketName;
+
+    @Value("${post-image.default-folder-path}")
+    private String folderName;
 
     // 글 등록
-    public Long createPost(CreatePostRequest postDto, Long categoryId, Long memberId) {
-
-        if (postDto.getTitle() == null || postDto.getTitle().isBlank()) {
-            throw new IllegalArgumentException("Title must not be empty");
-        }
-        if (postDto.getContent() == null || postDto.getContent().isBlank()) {
-            throw new IllegalArgumentException("Content must not be empty");
-        }
+    public Long createPost(CreatePostRequest createPostRequest, Long categoryId, Long memberId, List<MultipartFile> images) throws IOException {
 
         Post post = Post.builder()
                 .member(memberRepository.findById(memberId).orElseThrow(EntityNotFoundException::new))
                 .category(categoryRepository.findById(categoryId).orElseThrow(EntityNotFoundException::new))
-                .title(postDto.getTitle())
-                .content(postDto.getContent())
+                .title(createPostRequest.getTitle())
+                .content(createPostRequest.getContent())
                 .build();
 
-        return postRepository.save(post).getId();
-    }
+        postRepository.save(post);
 
+        if (images != null && !images.isEmpty()) {
+            List<CompletableFuture<String>> futureList = new ArrayList<>();
+
+            for (MultipartFile image : images) {
+                if (!image.isEmpty()) {
+                    // async
+                    CompletableFuture<String> uploadFuture = imageUploadService.uploadPostImageAsync(image);
+                    futureList.add(uploadFuture);
+                }
+            }
+
+            List<String> imageUrls = futureList.stream()
+                    .map(CompletableFuture::join)
+                    .toList();
+
+            List<PostImage> postImages = imageUrls.stream()
+                    .map(url -> PostImage.builder()
+                            .post(post)
+                            .imageUrl(url)
+                            .build())
+                    .collect(Collectors.toList());
+
+            postImageRepository.saveAll(postImages);
+        }
+
+        return post.getId();
+    }
 
     // 글 조회 1: 특정 카테고리의 글들을 날짜 내림차순으로 출력
     @Transactional(readOnly = true)
@@ -96,6 +129,7 @@ public class PostService {
         return new PageImpl<>(postListResponses, pageable, postsPage.getTotalElements());
     }
 
+    // 글 상세
     @Transactional
     public PostDetailResponse getPostDetailById(Long categoryId, Long postId) {
 
@@ -108,6 +142,10 @@ public class PostService {
 
         post.incrementViews();
 
+        List<String> imageUrls = postImageRepository.findAllByPostId(postId).stream()
+                .map(PostImage::getImageUrl)
+                .toList();
+
         return new PostDetailResponse(
                 post.getId(),
                 post.getCategory().getId(),
@@ -116,7 +154,9 @@ public class PostService {
                 post.getContent(),
                 post.getCreatedAt(),
                 post.getViews(),
-                post.getPrice()
+                post.getPrice(),
+                imageUrls
         );
     }
+
 }

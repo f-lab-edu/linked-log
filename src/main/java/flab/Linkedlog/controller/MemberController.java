@@ -4,13 +4,14 @@ import flab.Linkedlog.controller.response.ApiResponse;
 import flab.Linkedlog.dto.member.LogInRequest;
 import flab.Linkedlog.dto.member.SignUpRequest;
 import flab.Linkedlog.service.MemberService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.springframework.http.MediaType;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
 
 
 @RestController
@@ -19,20 +20,33 @@ public class MemberController {
 
     private final MemberService memberService;
 
-    @PostMapping(value = "/signup")
-    public ApiResponse<String> createMember(@RequestBody @Validated SignUpRequest signUpRequest) {
-        memberService.signUp(signUpRequest);
-
+    @PostMapping(value = "/signup", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ApiResponse<String> createMember(
+            @Valid @RequestPart SignUpRequest signUpRequest,
+            @RequestPart(required = false) MultipartFile profileImage) throws IOException {
+        memberService.signUp(signUpRequest, profileImage);
         return ApiResponse.success(signUpRequest.getUserId());
-
     }
+
 
     @PostMapping(value = "/login")
-    public ApiResponse<String> login(@RequestBody @Validated LogInRequest loginRequest) {
-        String token = memberService.login(loginRequest);
-
+    public ApiResponse<String> login(@RequestBody @Validated LogInRequest logInRequest) {
+        String token = memberService.login(logInRequest);
         return ApiResponse.success(token);
-
     }
 
+//
+//    @GetMapping("/mypage")
+//    @PreAuthorize("isAuthenticated()")
+//    public ApiResponse<Optional<MyPageResponse>> getMyPage() {
+//
+//        CustomUserDetails userDetails = (CustomUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+//
+//        Long memberId = userDetails.getMemberId();
+//        Optional<MyPageResponse> memberInfo = Optional.ofNullable(memberService.getMyPageById(memberId)
+//                .orElseThrow(() -> new EntityNotFoundException("MyPage not found")));
+//        return ApiResponse.success(memberInfo);
+//    }
+
 }
+

@@ -53,6 +53,7 @@ public class Post extends BaseEntity {
         this.price = price != null ? price : BigDecimal.ZERO;
     }
 
+
     public void incrementViews() {
         this.views++;
     }
