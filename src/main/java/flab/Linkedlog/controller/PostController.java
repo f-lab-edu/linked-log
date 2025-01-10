@@ -12,7 +12,6 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -32,11 +31,8 @@ public class PostController {
     public ApiResponse<Long> createPost(
             @Valid @RequestPart CreatePostRequest createPostRequest,
             @PathVariable Long categoryId,
-            @RequestPart(required = false) List<MultipartFile> images) throws IOException {
-        CustomUserDetails userDetails = (CustomUserDetails) SecurityContextHolder.
-                getContext().
-                getAuthentication().
-                getPrincipal();
+            @RequestPart(required = false) List<MultipartFile> images,
+            CustomUserDetails userDetails) throws IOException {
         Long memberId = userDetails.getMemberId();
 
         if (createPostRequest.getTitle() == null || createPostRequest.getTitle().isBlank()) {

@@ -4,6 +4,7 @@ import flab.Linkedlog.controller.response.ApiResponse;
 import flab.Linkedlog.dto.member.LogInRequest;
 import flab.Linkedlog.dto.member.SignUpRequest;
 import flab.Linkedlog.service.MemberService;
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
@@ -21,13 +22,26 @@ public class MemberController {
     private final MemberService memberService;
 
     @PostMapping(value = "/signup", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(summary = "회원가입")
     public ApiResponse<String> createMember(
-            @Valid @RequestPart SignUpRequest signUpRequest,
-            @RequestPart(required = false) MultipartFile profileImage) throws IOException {
+            @RequestPart(value = "signUpRequest", required = true)
+            @Valid SignUpRequest signUpRequest,
+
+            @RequestPart(required = false)
+            MultipartFile profileImage) throws IOException {
+
         memberService.signUp(signUpRequest, profileImage);
         return ApiResponse.success(signUpRequest.getUserId());
     }
 
+
+//    @PostMapping(value = "/signup", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+//    public ApiResponse<String> createMember(
+//            @Valid @RequestPart SignUpRequest signUpRequest,
+//            @RequestPart(required = false) MultipartFile profileImage) throws IOException {
+//        memberService.signUp(signUpRequest, profileImage);
+//        return ApiResponse.success(signUpRequest.getUserId());
+//    }
 
     @PostMapping(value = "/login")
     public ApiResponse<String> login(@RequestBody @Validated LogInRequest logInRequest) {

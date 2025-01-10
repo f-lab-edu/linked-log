@@ -38,7 +38,7 @@ public class SecurityConfiguration {
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
                         .requestMatchers("/admin-v1/**").hasAuthority("GENERAL")
                         .requestMatchers("/admin/**").hasAuthority("ADMIN")
-                        .requestMatchers("/signup", "/login").permitAll()
+                        .requestMatchers("/signup", "/login", "/chat/chatroom").permitAll()
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(exception -> exception
