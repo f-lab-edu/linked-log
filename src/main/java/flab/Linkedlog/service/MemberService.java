@@ -104,7 +104,7 @@ public class MemberService {
         return jwtUtil.generateToken(member.getUserId(), member.getMemberGrade(), member.getId());
     }
 
-    public MainResponse getMain(Long id, String token) {
+    public MainResponse getMain(Long id) {
 
         Member member = memberRepository.findById(id).orElseThrow();
         String nickName = member.getNickName();

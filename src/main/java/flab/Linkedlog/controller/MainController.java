@@ -19,16 +19,16 @@ public class MainController {
     MemberRepository memberRepository;
 
     @GetMapping(value = "/main")
-    public ApiResponse<MainResponse> getMainInfo(@RequestHeader(value = "Authorization", required = false) String token,
-                                                 CustomUserDetails userDetails) {
+    public ApiResponse<MainResponse> getMainInfo(
+            CustomUserDetails userDetails) {
 
-        if (userDetails == null || token == null || token.isEmpty()) {
+        if (userDetails == null) {
             MainResponse mainResponseForGuest = memberService.getMainForGuest(); // 게스트용 응답
             return ApiResponse.success(mainResponseForGuest);
         }
 
         Long id = userDetails.getMemberId();
-        MainResponse mainResponse = memberService.getMain(id, token);
+        MainResponse mainResponse = memberService.getMain(id);
 
         return ApiResponse.success(mainResponse);
     }
