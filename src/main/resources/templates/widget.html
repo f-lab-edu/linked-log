@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8"/>
+    <script src="https://js.tosspayments.com/v2/standard"></script>
+</head>
+<body>
+<!-- 할인 쿠폰 -->
+<div>
+    <input type="checkbox" id="coupon-box"/>
+    <label for="coupon-box"> 5,000원 쿠폰 적용 </label>
+</div>
+<!-- 결제 UI, 이용약관 UI 영역 -->
+<div id="payment-method"></div>
+<div id="agreement"></div>
+<!-- 결제하기 버튼 -->
+<button id="payment-button" disabled>결제하기</button>
+
+<script>
+    // URL에서 productId 추출
+    const urlParams = new URLSearchParams(window.location.search);
+    const productId = urlParams.get('productId');
+    const paymentId = urlParams.get('paymentId');
+
+    async function main() {
+        const coupon = document.getElementById("coupon-box");
+        const button = document.getElementById("payment-button");
+
+        try {
+            // 백엔드에서 PaymentWidgetRequest 데이터 가져오기
+            const response = await fetch(`/payment/widgetinfo?productId=${productId}&paymentId=${paymentId}`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('authToken')}` // 인증 토큰 추가
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`Failed to fetch widget info: ${response.status}`);
+            }
+
+            const data = await response.json();
+            if (!data) {
+                alert('결제 정보를 불러오는 데 실패했습니다.');
+                return;
+            }
+
+            console.log(data);
+
+            // 서버에서 받은 데이터
+            const {
+                clientKey, customerKey, orderId, productName, price,
+                customerEmail, customerPhone, customerNickname
+            } = data.response;
+
+            // ------ 결제 위젯 초기화 ------
+            const tossPayments = TossPayments(clientKey);
+            const widgets = tossPayments.widgets({
+                customerKey,
+            });
+
+            // ------ 결제 금액 설정 ------
+            await widgets.setAmount({
+                currency: "KRW",
+                value: price
+            });
+
+            // ------ UI 렌더링 ------
+            await Promise.all([
+                widgets.renderPaymentMethods({
+                    selector: "#payment-method",
+                    variantKey: "DEFAULT"
+                }),
+                widgets.renderAgreement({
+                    selector: "#agreement",
+                    variantKey: "AGREEMENT"
+                })
+            ]);
+
+            // ------ 쿠폰 적용 시 결제 금액 변경 ------
+            coupon.addEventListener("change", async function () {
+                if (coupon.checked) {
+                    await widgets.setAmount({
+                        currency: "KRW",
+                        value: price - 5000
+                    });
+                } else {
+                    await widgets.setAmount({
+                        currency: "KRW",
+                        value: price
+                    });
+                }
+            });
+
+            // 결제 버튼 활성화
+            button.disabled = false;
+
+            // ------ '결제하기' 버튼 클릭 시 결제 요청 ------
+            button.addEventListener("click", async function () {
+                await widgets.requestPayment({
+                    orderId: orderId,
+                    orderName: productName,
+                    successUrl: window.location.origin + "/front/payment/success",
+                    failUrl: window.location.origin + "/front/payment/fail",
+                    customerEmail: customerEmail,
+                    customerName: customerNickname,
+                    customerMobilePhone: customerPhone,
+                });
+            });
+            console.log('결제 응답:', response);
+        } catch (error) {
+            console.error('Error:', error);
+            alert('결제 정보를 불러오는 데 실패했습니다.');
+        }
+    }
+
+    main();
+</script>
+</body>
+</html>

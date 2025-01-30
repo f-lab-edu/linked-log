@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="utf-8"/>
+</head>
+<body>
+<h2>결제 성공</h2>
+<p id="paymentKey"></p>
+<p id="orderId"></p>
+<p id="amount"></p>
+
+<script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const paymentKey = urlParams.get("paymentKey");
+    const orderId = urlParams.get("orderId");
+    const amount = urlParams.get("amount");
+    const paymentType = urlParams.get("paymentType");
+    const token = localStorage.getItem('authToken');
+
+    async function confirm() {
+        const requestData = {
+            paymentType: paymentType,
+            paymentKey: paymentKey,
+            orderId: orderId,
+            amount: amount,
+        };
+
+        const response = await fetch("/payment/confirm", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(requestData),
+        });
+
+        const json = await response.json();
+
+        if (!response.ok) {
+            console.log(json);
+            window.location.href = `/fail?message=${json.message}&code=${json.code}`;
+        }
+
+        console.log(json);
+        setTimeout(() => {
+            window.location.href = '/front/payment/productlist';
+        }, 5000);
+    }
+
+    confirm();
+
+    const paymentKeyElement = document.getElementById("paymentKey");
+    const orderIdElement = document.getElementById("orderId");
+    const amountElement = document.getElementById("amount");
+
+    orderIdElement.textContent = "주문번호: " + orderId;
+    amountElement.textContent = "결제 금액: " + amount;
+    paymentKeyElement.textContent = "paymentKey: " + paymentKey;
+</script>
+</body>
+</html>

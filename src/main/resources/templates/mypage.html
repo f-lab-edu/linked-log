@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Page</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+
+        .container {
+            max-width: 400px;
+            margin: auto;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        h2 {
+            text-align: center;
+            color: #333;
+        }
+
+        .profile-image {
+            display: flex;
+            justify-content: center;
+            margin: 20px 0;
+        }
+
+        .profile-image img {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .info {
+            font-size: 16px;
+            line-height: 1.5;
+            margin-bottom: 10px;
+        }
+
+        .info span {
+            font-weight: bold;
+        }
+
+        .button-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 20px;
+            gap: 10px;
+        }
+
+        .button {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .button:hover {
+            background-color: #45a049;
+        }
+
+        .error {
+            color: red;
+            text-align: center;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>My Page</h2>
+
+    <div class="profile-image" id="profileImage">
+        <img src="default-profile.png" alt="Profile Image">
+    </div>
+
+    <div class="info" id="nickname">
+        <span>Nickname:</span> Loading...
+    </div>
+
+    <div class="info" id="point">
+        <span>Point:</span> Loading...
+    </div>
+
+    <div class="button-container">
+        <a href="/front/main" class="button">Back to Main</a>
+        <a href="/front/payment/widget" class="button">Make Payment</a>
+        <a href="/front/payment/productlist" class="button">Make Payment</a>
+    </div>
+
+
+    <p class="error" id="errorMessage"></p>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
+<script>
+    const BASE_URL = 'http://localhost:8080';
+    const token = localStorage.getItem('authToken');
+    console.log('Token:', token);
+
+    async function fetchMyPage() {
+        try {
+            const response = await axios.get(`${BASE_URL}/mypage`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            const data = response.data.response;
+            console.log('MyPage Response:', data);
+
+
+            // 프로필 이미지, 닉네임, 포인트를 화면에 표시합니다.
+            document.getElementById('profileImage').innerHTML = `<img src="${data.profileImageKey}" alt="Profile Image">`;
+            document.getElementById('nickname').innerHTML = `<span>Nickname:</span> ${data.nickname}`;
+            document.getElementById('point').innerHTML = `<span>Point:</span> ${data.point}`;
+
+        } catch (error) {
+            console.error('Error fetching my page:', error);
+            const errorMessage = error.response?.data?.error || 'An error occurred. Please try again.';
+            document.getElementById('errorMessage').textContent = errorMessage;
+        }
+    }
+
+    if (token) {
+        fetchMyPage();
+    } else {
+        document.getElementById('errorMessage').textContent = 'You are not logged in. Please log in first.';
+    }
+    //
+    // var clientKey = 'test_gck_docs_Ovk5rk1EwkEbP0W43n07xlzm'
+    // //var secretKey = 'test_gsk_docs_OaPz8L5KdmQXkzRz3y47BMw6'
+    // const customerKey = 'mBK0hiM5ZzXGDhChYpJ43'
+    // const paymentWidget = PaymentWidget(clientKey, customerKey)
+    //
+    // document.getElementById('payButton').addEventListener('click', function () {
+    //     console.log('Pay button clicked'); // 로그 추가
+    //     try {
+    //         // 1단계 : springboot 백엔드에 요청 보내기
+    //         const paymentRequest = {
+    //             paymentType: 'CARD', // 카드, 계좌이체 등
+    //             amount: 10000,      // 결제 금액
+    //             orderId: 'ORDER_ID_' + Date.now(),
+    //             orderName: '10000 포인트 충전'
+    //         };
+    //
+    //         console.log('ClientKey:', clientKey);
+    //         paymentWidget.requestPayment('CARD', {
+    //             amount: 10000,
+    //             orderId: 'ORDER_ID_' + Date.now(),
+    //             orderName: '테스트 결제',
+    //             customerName: '홍길동',
+    //             successUrl: 'http://localhost:8080',
+    //             failUrl: 'http://localhost:8080',
+    //         })
+    //             .then(function (response) {
+    //                 console.log('결제 성공:', response);
+    //             })
+    //             .catch(function (error) {
+    //                 console.error('결제 오류:', error);
+    //                 if (error.message.includes('Invalid client key')) {
+    //                     console.error('ClientKey가 유효하지 않습니다!');
+    //                 } else {
+    //                     console.log(error.message)
+    //                 }
+    //             });
+    //     } catch (error) {
+    //         console.error('Payment request error:', error);
+    //         document.getElementById('errorMessage').textContent = 'Payment request failed. Please try again.';
+    //     }
+    //});
+</script>
+</body>
+</html>

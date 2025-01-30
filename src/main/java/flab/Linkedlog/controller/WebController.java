@@ -2,6 +2,7 @@ package flab.Linkedlog.controller;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -10,7 +11,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 @RequestMapping("/front")
 @Slf4j
 public class WebController {
-    
+
     @GetMapping("/main")
     public String mainPage() {
         return "main";
@@ -24,6 +25,11 @@ public class WebController {
     @GetMapping("/signup")
     public String signUpPage() {
         return "signup";
+    }
+
+    @GetMapping("/mypage")
+    public String myPagePage() {
+        return "mypage";
     }
 
     @GetMapping("/chat/chatroom")
@@ -44,5 +50,29 @@ public class WebController {
         return "chatroomdetail";
     }
 
+//    @GetMapping("/payment/payrequest")
+//    public String payRequestPage() {
+//        return "payrequest";
+//    }
 
+    @GetMapping("/payment/productlist")
+    public String productListPage() {
+        return "productlist";
+    }
+
+    @GetMapping("/payment/widget")
+    public String paymentWidgetPage() {
+        return "widget";
+    }
+
+    @GetMapping("/payment/success")
+    public String paymentSuccessPage() {
+        return "paysuccess";
+    }
+
+    @GetMapping("/payment/fail")
+    public String paymentFailPage() {
+        return "payfail";
+    }
+    
 }

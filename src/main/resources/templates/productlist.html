@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product List</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #f4f4f4;
+            min-height: 100vh;
+        }
+
+        .container {
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            width: 400px;
+            text-align: center;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+
+        .product {
+            padding: 15px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .product-name {
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .product-price {
+            font-size: 16px;
+            color: #333;
+        }
+
+        .buy-button {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .buy-button:hover {
+            background-color: #45a049;
+        }
+
+        .error-message {
+            color: red;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>Product List</h1>
+    <div id="product-list">
+        <!-- 상품 목록들 동적으로 로드 -->
+    </div>
+    <div id="error-message" class="error-message"></div>
+</div>
+
+<script>
+    const BASE_URL = 'http://localhost:8080';
+    const token = localStorage.getItem('authToken');
+    const errorMessageElement = document.getElementById('error-message');
+    const productListElement = document.getElementById('product-list');
+
+    async function fetchProductList() {
+        if (!token) {
+            errorMessageElement.textContent = 'You are not logged in. Please log in first.';
+            return;
+        }
+        try {
+            const response = await fetch(`${BASE_URL}/payment/productlist`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            const data = await response.json();
+            if (data && data.response) {
+                const products = data.response;
+
+                if (!productListElement) {
+                    throw new Error('Product list container not found.');
+                }
+
+                products.forEach(product => {
+                    const productDiv = document.createElement('div');
+                    productDiv.classList.add('product');
+                    productDiv.innerHTML = `
+                        <div>
+                            <div class="product-name">${product.productName}</div>
+                            <div class="product-price">Price: ${product.price} KRW</div>
+                        </div>
+                        <button class="buy-button" onclick="buyProduct(${product.id})">Buy</button>
+                    `;
+                    productListElement.appendChild(productDiv);
+                });
+            }
+        } catch (error) {
+            console.error('Error fetching product list:', error);
+            errorMessageElement.textContent = 'Failed to fetch product list.';
+        }
+    }
+
+    async function buyProduct(productId) {
+        try {
+            // 구매 API 호출
+            const response = await fetch(`${BASE_URL}/payment/request`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    paymentType: "NORMAL",
+                    productId: productId
+                })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.message || 'Failed to process purchase.');
+            }
+
+            // 임시 저장 response를 받아 위젯 queryParameter에 사용
+            const paymentId = data.response
+            console.log(data)
+            console.log(paymentId);
+
+            const url = `/front/payment/widget?productId=${productId}&paymentId=${paymentId}`;
+            window.location.href = url;
+        } catch (error) {
+            console.error('Purchase failed:', error);
+            errorMessageElement.textContent = 'Purchase request failed. Please try again.';
+        }
+    }
+
+    // 초기화
+    fetchProductList();
+</script>
+</body>
+</html>

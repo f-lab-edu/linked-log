@@ -42,7 +42,7 @@ public class SecurityConfiguration {
                         .requestMatchers("/admin/**").hasAuthority("ADMIN")
                         .requestMatchers("/signup", "/login", "/chat/chatroom", "/main").permitAll()
                         .requestMatchers("/front/signup", "/front/login", "/front/chat/chatroom", "/front/main", "/front/chat/create/group/form"
-                                , "/front/chat.connect/**", "/front/chat/chatroom/**", "/ws-chat/**").permitAll()
+                                , "/front/chat.connect/**", "/front/chat/chatroom/**", "/ws-chat/**", "/front/mypage", "/front/payment/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(exception -> exception
