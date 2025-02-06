@@ -91,8 +91,10 @@ public class PostController {
     @PreAuthorize("isAuthenticated()")
     public ApiResponse<PostDetailResponse> getPostDetail(
             @PathVariable Long categoryId,
-            @PathVariable Long postId) {
-        PostDetailResponse post = postService.getPostDetailById(categoryId, postId);
+            @PathVariable Long postId,
+            CustomUserDetails userDetails) {
+        Long memberId = userDetails.getMemberId();
+        PostDetailResponse post = postService.getPostDetailById(categoryId, postId, memberId);
         return ApiResponse.success(post);
     }
 

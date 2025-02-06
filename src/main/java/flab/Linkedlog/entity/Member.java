@@ -77,4 +77,11 @@ public class Member extends BaseEntity {
             this.cashPoint = this.cashPoint.add(amount);
         }
     }
+
+    public void decreaseCashPoint(BigDecimal amount) {
+        if (this.cashPoint.compareTo(amount) < 0) {
+            throw new IllegalStateException("포인트가 부족합니다.");
+        }
+        this.cashPoint = this.cashPoint.subtract(amount);
+    }
 }
