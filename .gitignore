@@ -54,3 +54,9 @@ jacoco.exec
 gradle/
 gradlew
 gradlew.bat
+
+# QueryDSL Q-class 제외
+**/build/
+**/out/
+**/generated/
+**/src/main/generated/
