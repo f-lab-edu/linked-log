@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>결제 페이지</title>
+</head>
+<body>
+<h1>결제 페이지</h1>
+
+<button id="pay-button">결제하기</button>
+
+<script th:inline="javascript">
+    // const clientKey = 'test_gck_docs_Ovk5rk1EwkEbP0W43n07xlzm'; // Toss에서 제공한 Client Key
+    // const tossPayments = TossPayments(clientKey);
+    //
+    // document.getElementById('pay-button').addEventListener('click', function () {
+    //     tossPayments.requestPayment('카드', {
+    //         amount: '[[${amount}]]', // 서버에서 전달된 결제 금액
+    //         orderId: '[[${orderId}]]', // 서버에서 생성한 주문 ID
+    //         orderName: '[[${orderName}]]', // 상품 이름
+    //         successUrl: '[[${successUrl}]]', // 결제 성공 URL
+    //         failUrl: '[[${failUrl}]]' // 결제 실패 URL
+    //     });
+    // });
+</script>
+</body>
+</html>

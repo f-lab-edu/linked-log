@@ -72,4 +72,9 @@ public class Member extends BaseEntity {
         this.profileImage = profileImage;
     }
 
+    public void increaseCashPoint(BigDecimal amount) {
+        if (amount != null && amount.compareTo(BigDecimal.ZERO) > 0) {
+            this.cashPoint = this.cashPoint.add(amount);
+        }
+    }
 }

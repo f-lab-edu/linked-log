@@ -2,6 +2,7 @@ package flab.Linkedlog.service;
 
 import flab.Linkedlog.dto.MainResponse;
 import flab.Linkedlog.dto.member.LogInRequest;
+import flab.Linkedlog.dto.member.MyPageResponse;
 import flab.Linkedlog.dto.member.SignUpRequest;
 import flab.Linkedlog.entity.Member;
 import flab.Linkedlog.repository.MemberRepository;
@@ -27,6 +28,7 @@ public class MemberService {
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
     private final ImageUploadService imageUploadService;
+    private final S3Service s3Service;
 
     @Value("${profile.default-image-url}")
     private String defaultProfileImage;
@@ -104,7 +106,7 @@ public class MemberService {
         return jwtUtil.generateToken(member.getUserId(), member.getMemberGrade(), member.getId());
     }
 
-    public MainResponse getMain(Long id, String token) {
+    public MainResponse getMain(Long id) {
 
         Member member = memberRepository.findById(id).orElseThrow();
         String nickName = member.getNickName();
@@ -124,18 +126,20 @@ public class MemberService {
                 .build();
     }
 
-//    // 마이페이지
-//    @Transactional(readOnly = true)
-//    public Optional<MyPageResponse> getMyPageById(Long memberId) {
-//        Member member = memberRepository.findById(memberId)
-//                .orElseThrow(() -> new EntityNotFoundException("Member not found"));
-//        String profileImageUrl = s3Service.getFileUrl(member.getProfileImage());
-//
-//        return Optional.of(new MyPageResponse(
-//                profileImageUrl,
-//                member.getNickName()
-//        ));
-//    }
+
+    @Transactional(readOnly = true)
+    public MyPageResponse getMyPageById(Long memberId) {
+        Member member = memberRepository.findById(memberId).orElseThrow();
+        String profileImageUrl = s3Service.getFileUrl(member.getProfileImage(), bucketName);
+
+        return MyPageResponse.builder()
+                .memberId(memberId)
+                .nickname(member.getNickName())
+                .profileImageKey(profileImageUrl)
+                .point(member.getCashPoint())
+                .build();
+
+    }
 
 
 }

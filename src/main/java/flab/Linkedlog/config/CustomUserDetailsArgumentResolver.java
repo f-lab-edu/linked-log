@@ -23,7 +23,18 @@ public class CustomUserDetailsArgumentResolver implements HandlerMethodArgumentR
                                   NativeWebRequest nativeWebRequest,
                                   WebDataBinderFactory webDataBinderFactory) throws Exception {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        return authentication != null ? authentication.getPrincipal() : null;
+
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return null;
+        }
+
+        Object principal = authentication.getPrincipal();
+
+        // principal이 CustomUserDetails 타입인지 확인
+        if (principal instanceof CustomUserDetails) {
+            return principal;
+        }
+
+        return null;
     }
 }
-

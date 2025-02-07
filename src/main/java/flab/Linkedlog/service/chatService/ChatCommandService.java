@@ -11,6 +11,7 @@ import flab.Linkedlog.repository.chat.ChatRoomRepository;
 import flab.Linkedlog.util.JwtUtil;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -24,6 +25,7 @@ import java.util.*;
 @Service
 @Transactional
 @RequiredArgsConstructor
+@Slf4j
 public class ChatCommandService {
 
     private final ChatRoomRepository chatRoomRepository;
@@ -35,7 +37,6 @@ public class ChatCommandService {
     private final PasswordEncoder passwordEncoder;
     private final Map<Long, Set<Long>> chatRoomUsers = new HashMap<>();
     private final JwtUtil jwtUtil;
-    private final Logger logger = LoggerFactory.getLogger(ChatCommandService.class);
 
     // 그룹 채팅방 개설
     public Long createGroupChatRoom(ChatRoomCreateRequest chatRoomCreateRequest, Long memberId) {
@@ -217,7 +218,7 @@ public class ChatCommandService {
     // 채팅방 접속
     public ChatMessageConnectResponse connectToChatRoom(Long chatRoomId, String password, String token) {
 
-        logger.info("서비스에서 최초 전달받은 토큰 :" + token);
+        log.info("서비스에서 최초 전달받은 토큰 :" + token);
         Long memberId = jwtUtil.getMemberIdFromTokenOrContext(token);
 
         ChatRoom chatRoom = chatRoomRepository.findById(chatRoomId)

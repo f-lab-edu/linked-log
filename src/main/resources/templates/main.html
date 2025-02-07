@@ -55,6 +55,24 @@
             margin-top: 20px;
             font-size: 18px;
         }
+
+        .my-page {
+            margin-top: 15px;
+        }
+
+        .my-page a {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #2196F3;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        .my-page a:hover {
+            background-color: #1e87d4;
+        }
     </style>
 </head>
 <body>
@@ -71,6 +89,9 @@
     <div class="user-info" id="user-info" style="display: none;">
         <p>Welcome, <span id="nickName"></span>!</p>
         <p>Your User ID: <span id="id"></span></p>
+        <div class="my-page">
+            <a th:href="@{/front/mypage}">Go to My Page</a>
+        </div>
     </div>
 
     <div class="login-message" id="login-message" style="display: none;">
@@ -79,7 +100,6 @@
 </div>
 
 <script>
-
     // Local Storage에서 토큰을 가져온다.
     const token = localStorage.getItem('authToken');
     console.log('Token:', token);
