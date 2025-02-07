@@ -17,14 +17,13 @@ public class MainController {
 
     @GetMapping(value = "/main")
     public ApiResponse<MainResponse> getMainInfo(
-            @AuthenticationPrincipal Object principal) {
+            CustomUserDetails userDetails) {
 
-        if (principal == null || principal instanceof String) {
+        if (userDetails == null) {
             MainResponse mainResponseForGuest = memberService.getMainForGuest();
             return ApiResponse.success(mainResponseForGuest);
         }
 
-        CustomUserDetails userDetails = (CustomUserDetails) principal;
         Long memberId = userDetails.getMemberId();
         MainResponse mainResponse = memberService.getMain(memberId);
 
